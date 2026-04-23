@@ -8,7 +8,13 @@
       "Bash(venv/Scripts/python.exe:*)",
       "Bash(git commit:*)",
       "Bash(python -c ':*)",
-      "Bash(venv/Scripts/python -m pytest tests/test_detective.py -v)"
+      "Bash(venv/Scripts/python -m pytest tests/test_detective.py -v)",
+      "Bash(ls C:/Users/Vatsal/Documents/costsherlock/rag/documents/*.md)",
+      "Bash(pip show:*)",
+      "Bash(venv/Scripts/python -c ':*)",
+      "Bash(venv/Scripts/python rag/ingest.py)",
+      "Bash(venv/Scripts/python rag/retriever.py)",
+      "Bash(venv/Scripts/python -m rag.ingest)"
     ]
   }
 }
