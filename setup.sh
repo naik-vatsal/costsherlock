@@ -4,9 +4,9 @@
 set -euo pipefail
 
 python -m venv venv
-source venv/bin/activate
+source venv/Scripts/activate 2>/dev/null || source venv/bin/activate
 
-pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install --upgrade pip --quiet
+python -m pip install -r requirements.txt
 
-echo "Setup complete. Activate with: source venv/bin/activate"
+echo "Setup complete. Activate with: source venv/Scripts/activate"

@@ -3,7 +3,10 @@
     "allow": [
       "Bash(chmod +x /c/Users/Vatsal/Documents/costsherlock/setup.sh)",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(bash:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
