@@ -1,3 +1,4 @@
+# Dashboard module — Priti Ghosh
 """CostSherlock Streamlit Dashboard — main application."""
 
 from __future__ import annotations
