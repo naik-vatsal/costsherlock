@@ -17,7 +17,12 @@
       "Bash(venv/Scripts/python -m rag.ingest)",
       "Bash(venv/Scripts/python -m agents.analyst)",
       "Bash(venv/Scripts/python -m pytest tests/test_analyst.py -v -m integration)",
-      "Bash(venv/Scripts/python -m pytest tests/test_narrator.py -v)"
+      "Bash(venv/Scripts/python -m pytest tests/test_narrator.py -v)",
+      "Bash(venv/Scripts/python -c \"import rich; print\\(rich.__version__\\)\")",
+      "Bash(venv/Scripts/python -c \"from rich.console import Console; c = Console\\(\\); c.print\\('[green]rich ok[/green]'\\)\")",
+      "Bash(mkdir -p reports/demo)",
+      "Bash(venv/Scripts/python pipeline.py --cost data/synthetic/demo_cost.json --logs data/synthetic/demo_cloudtrail --output reports)",
+      "Bash(netstat -ano)"
     ]
   }
 }
