@@ -14,7 +14,9 @@
       "Bash(venv/Scripts/python -c ':*)",
       "Bash(venv/Scripts/python rag/ingest.py)",
       "Bash(venv/Scripts/python rag/retriever.py)",
-      "Bash(venv/Scripts/python -m rag.ingest)"
+      "Bash(venv/Scripts/python -m rag.ingest)",
+      "Bash(venv/Scripts/python -m agents.analyst)",
+      "Bash(venv/Scripts/python -m pytest tests/test_analyst.py -v -m integration)"
     ]
   }
 }
