@@ -44,6 +44,7 @@ BLUE = "#2563EB"
 GREEN = "#059669"
 RED = "#DC2626"
 ORANGE = "#F97316"
+AMBER = "#D97706"
 VIEWS = ["Timeline", "Investigation", "Evidence", "Compare", "Feedback"]
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -73,9 +74,9 @@ st.markdown(
             padding-bottom: 3rem;
         }}
 
-        /* ── Sidebar ─────────────────────────────────────────────────────── */
+        /* ── Sidebar gradient background ─────────────────────────────────── */
         [data-testid="stSidebar"] {{
-            background-color: {NAVY};
+            background: linear-gradient(180deg, #0F1E38 0%, #1B2A4A 60%, #1e3a5f 100%);
         }}
         [data-testid="stSidebar"] label,
         [data-testid="stSidebar"] p,
@@ -93,9 +94,115 @@ st.markdown(
             color: #FFFFFF !important;
         }}
 
+        /* ── Sidebar brand block ─────────────────────────────────────────── */
+        .sb-brand {{
+            background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(5,150,105,0.15));
+            border: 1px solid rgba(96,165,250,0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }}
+        .sb-brand-title {{
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #FFFFFF !important;
+            letter-spacing: -0.01em;
+        }}
+        .sb-brand-sub {{
+            font-size: 0.72rem;
+            color: #93C5FD !important;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }}
+
+        /* ── Sidebar stat pill ───────────────────────────────────────────── */
+        .sb-stat {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 7px 12px;
+            margin-bottom: 6px;
+        }}
+        .sb-stat-label {{
+            font-size: 0.75rem;
+            color: #94A3B8 !important;
+        }}
+        .sb-stat-value {{
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #E2E8F0 !important;
+        }}
+
+        /* ── Status banner in Investigation view ──────────────────────────── */
+        .status-banner {{
+            border-radius: 8px;
+            padding: 10px 18px;
+            margin-bottom: 16px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.03em;
+        }}
+        .status-high {{
+            background: rgba(5,150,105,0.12);
+            border: 1px solid #059669;
+            color: #059669;
+        }}
+        .status-medium {{
+            background: rgba(217,119,6,0.10);
+            border: 1px solid #D97706;
+            color: #D97706;
+        }}
+        .status-low {{
+            background: rgba(220,38,38,0.10);
+            border: 1px solid #DC2626;
+            color: #DC2626;
+        }}
+
+        /* ── Severity badge ──────────────────────────────────────────────── */
+        .sev-badge {{
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #FFFFFF;
+        }}
+        .sev-critical {{ background: #DC2626; }}
+        .sev-warning {{ background: #D97706; }}
+        .sev-info {{ background: #2563EB; }}
+
+        /* ── Green "View Report" button wrapper ──────────────────────────── */
+        div.btn-investigated button {{
+            background-color: #059669 !important;
+            border-color: #059669 !important;
+            color: white !important;
+        }}
+        div.btn-investigated button:hover {{
+            background-color: #047857 !important;
+        }}
+
+        /* ── Shimmer loading animation ───────────────────────────────────── */
+        @keyframes shimmer {{
+            0% {{ background-position: -1000px 0; }}
+            100% {{ background-position: 1000px 0; }}
+        }}
+        .loading-shimmer {{
+            background: linear-gradient(90deg, var(--secondary-background-color) 25%, rgba(128,128,128,0.1) 50%, var(--secondary-background-color) 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+            height: 16px;
+            margin-bottom: 8px;
+        }}
+
         /* ── Anomaly callout card ─────────────────────────────────────────── */
         .anomaly-callout {{
-            background: #FFFFFF;
+            background: var(--secondary-background-color);
+            color: var(--text-color);
             border-left: 5px solid {RED};
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(220, 38, 38, 0.12);
@@ -103,43 +210,32 @@ st.markdown(
             margin-bottom: 18px;
         }}
 
-        /* ── Generic info card (used in Compare, Evidence) ───────────────── */
+        /* ── Generic info card (used in Compare, Evidence, Feedback) ─────── */
         .info-card {{
-            background: #FFFFFF;
+            background: var(--secondary-background-color);
+            color: var(--text-color);
             border-radius: 10px;
-            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
             padding: 18px 22px;
             margin-bottom: 14px;
             border-top: 3px solid {BLUE};
         }}
 
         /* ── Anomaly table ────────────────────────────────────────────────── */
-        .tbl-header {{
-            background: {NAVY};
-            border-radius: 8px 8px 0 0;
-            padding: 8px 0 8px 0;
-            margin-bottom: 2px;
-        }}
-        .tbl-header span {{
-            color: #FFFFFF !important;
-            font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-        }}
         .tbl-row {{
-            border-bottom: 1px solid #F1F5F9;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.15);
             padding: 4px 0;
             transition: background 0.1s;
         }}
         .tbl-row-high {{
-            background: #FEF2F2;
-            border-bottom: 1px solid #FECACA;
+            background: rgba(220, 38, 38, 0.06);
+            border-bottom: 1px solid rgba(220, 38, 38, 0.2);
         }}
 
         /* ── Cost calculation monospace box ──────────────────────────────── */
         .cost-box {{
-            background: #F0FDF4;
+            background: var(--secondary-background-color);
+            color: var(--text-color);
             border: 1px solid {GREEN};
             border-radius: 8px;
             padding: 12px 16px;
@@ -162,35 +258,19 @@ st.markdown(
         }}
 
         /* ── Metric cards ────────────────────────────────────────────────── */
-        /* Use Streamlit CSS variables so cards adapt to light AND dark theme */
         [data-testid="stMetric"] {{
-            background: var(--secondary-background-color);
+            background: rgba(37, 99, 235, 0.07) !important;
             border-radius: 10px;
             box-shadow: 0 1px 5px rgba(0, 0, 0, 0.07);
             padding: 14px 16px !important;
             border-left: 3px solid {BLUE};
         }}
-        /* Label row — slightly muted but always readable */
-        [data-testid="stMetric"] [data-testid="stMetricLabel"],
-        [data-testid="stMetric"] [data-testid="stMetricLabel"] p,
-        [data-testid="stMetric"] [data-testid="stMetricLabel"] span,
-        [data-testid="stMetric"] [data-testid="stMetricLabel"] div {{
+        [data-testid="stMetric"] * {{
             color: var(--text-color) !important;
-            opacity: 0.72;
-            font-size: 0.8rem !important;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
         }}
-        /* Value row — full weight, full contrast */
-        [data-testid="stMetric"] [data-testid="stMetricValue"],
-        [data-testid="stMetric"] [data-testid="stMetricValue"] * {{
-            color: var(--text-color) !important;
-            opacity: 1 !important;
+        [data-testid="stMetric"] [data-testid="stMetricValue"] *,
+        [data-testid="stMetric"] div[class*="metric-container"] div:nth-child(2) * {{
             font-weight: 700 !important;
-        }}
-        /* Delta row (not used today but safe to pin) */
-        [data-testid="stMetric"] [data-testid="stMetricDelta"] * {{
-            opacity: 1 !important;
         }}
 
         /* ── Download button ─────────────────────────────────────────────── */
@@ -202,10 +282,11 @@ st.markdown(
         /* ── Footer ──────────────────────────────────────────────────────── */
         .cs-footer {{
             text-align: center;
-            color: #94A3B8;
+            color: var(--text-color);
+            opacity: 0.55;
             font-size: 0.78rem;
             padding: 24px 0 8px 0;
-            border-top: 1px solid #E2E8F0;
+            border-top: 1px solid rgba(128, 128, 128, 0.2);
             margin-top: 48px;
         }}
     </style>
@@ -228,6 +309,8 @@ _DEFAULTS: dict = {
     "z_threshold_slider": 2.5,
     # deferred toast: set before st.rerun(), consumed once at next render
     "_pending_toast": "",
+    # auto-run flag: set when "Investigate" clicked from Timeline
+    "_auto_run": False,
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
@@ -305,6 +388,42 @@ def _persist_investigation(inv: InvestigationReport) -> None:
     existing = {(r.anomaly.service, r.anomaly.date) for r in st.session_state.investigations}
     if (inv.anomaly.service, inv.anomaly.date) not in existing:
         st.session_state.investigations.append(inv)
+
+
+def _severity_badge(delta: float) -> str:
+    """Return an HTML severity badge based on cost delta."""
+    if delta > 200:
+        return '<span class="sev-badge sev-critical">Critical</span>'
+    elif delta > 50:
+        return '<span class="sev-badge sev-warning">Warning</span>'
+    return '<span class="sev-badge sev-info">Info</span>'
+
+
+def _confidence_color(conf: float) -> str:
+    """Return a semantic color string for a confidence value."""
+    if conf >= 0.8:
+        return GREEN
+    if conf >= 0.55:
+        return AMBER
+    return RED
+
+
+def _conf_class(conf: float) -> str:
+    """Return the CSS class name for a confidence-level status banner."""
+    if conf >= 0.8:
+        return "status-high"
+    if conf >= 0.55:
+        return "status-medium"
+    return "status-low"
+
+
+def _conf_label(conf: float) -> str:
+    """Return a human-readable confidence label with percentage."""
+    if conf >= 0.8:
+        return f"HIGH CONFIDENCE ({conf:.0%})"
+    if conf >= 0.55:
+        return f"MEDIUM CONFIDENCE ({conf:.0%})"
+    return f"LOW CONFIDENCE ({conf:.0%})"
 
 
 # ── Core pipeline logic (no Streamlit UI side-effects) ───────────────────────
@@ -489,45 +608,140 @@ def _run_all_investigations(anomalies: list[Anomaly]) -> None:
     st.rerun()
 
 
+# ── Investigation navigation callbacks ───────────────────────────────────────
+# Defined as module-level functions so Streamlit's on_click/on_change machinery
+# commits state BEFORE the automatic rerun — avoiding the race condition where
+# the sidebar radio reads stale state and resets current_view to "Timeline".
+
+def _nav_prev() -> None:
+    invs_list = st.session_state.investigations
+    inv = st.session_state.current_investigation
+    if inv is None or not invs_list:
+        return
+    current_idx = next(
+        (i for i, r in enumerate(invs_list)
+         if r.anomaly.service == inv.anomaly.service and r.anomaly.date == inv.anomaly.date),
+        0,
+    )
+    if current_idx > 0:
+        target = invs_list[current_idx - 1]
+        st.session_state.current_investigation = target
+        st.session_state.selected_anomaly = target.anomaly
+        # Keep selectbox widget state in sync so it doesn't lag behind
+        inv_labels = [f"{r.anomaly.service}  —  {r.anomaly.date}" for r in invs_list]
+        st.session_state.inv_nav_sel = inv_labels[current_idx - 1]
+
+
+def _nav_next() -> None:
+    invs_list = st.session_state.investigations
+    inv = st.session_state.current_investigation
+    if inv is None or not invs_list:
+        return
+    current_idx = next(
+        (i for i, r in enumerate(invs_list)
+         if r.anomaly.service == inv.anomaly.service and r.anomaly.date == inv.anomaly.date),
+        0,
+    )
+    if current_idx < len(invs_list) - 1:
+        target = invs_list[current_idx + 1]
+        st.session_state.current_investigation = target
+        st.session_state.selected_anomaly = target.anomaly
+        inv_labels = [f"{r.anomaly.service}  —  {r.anomaly.date}" for r in invs_list]
+        st.session_state.inv_nav_sel = inv_labels[current_idx + 1]
+
+
+def _on_investigate(anomaly: Anomaly) -> None:
+    """Callback for both 'Investigate' and 'View Report' buttons on the Timeline.
+
+    Sets all required state BEFORE the rerun so the sidebar radio (key='current_view')
+    hasn't been instantiated yet when current_view is written — avoiding the
+    StreamlitAPIException that firing a direct assignment after widget render causes.
+    """
+    st.session_state.selected_anomaly = anomaly
+    st.session_state.current_view = "Investigation"
+    cached = next(
+        (r for r in st.session_state.investigations
+         if r.anomaly.service == anomaly.service and r.anomaly.date == anomaly.date),
+        None,
+    )
+    if cached:
+        st.session_state.current_investigation = cached
+        st.session_state._auto_run = False
+    else:
+        st.session_state._auto_run = True
+
+
+def _nav_select() -> None:
+    invs_list = st.session_state.investigations
+    sel_label = st.session_state.get("inv_nav_sel", "")
+    if not sel_label or not invs_list:
+        return
+    inv_labels = [f"{r.anomaly.service}  —  {r.anomaly.date}" for r in invs_list]
+    if sel_label not in inv_labels:
+        return
+    target = invs_list[inv_labels.index(sel_label)]
+    st.session_state.current_investigation = target
+    st.session_state.selected_anomaly = target.anomaly
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 
 with st.sidebar:
-    st.markdown("# 🔍 CostSherlock")
-    st.markdown("*AWS Cost Anomaly Investigator*")
+    st.markdown("""
+<div class="sb-brand">
+    <div class="sb-brand-title">🔍 CostSherlock</div>
+    <div class="sb-brand-sub">AWS FinOps · Anomaly Intelligence</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # key="current_view" makes st.session_state.current_view the single source of
+    # truth for the radio.  Programmatic writes (e.g. setting current_view =
+    # "Investigation" from the Timeline) are reflected immediately on the next
+    # render without the index= / widget-state conflict that caused nav resets.
+    st.radio("Navigation", VIEWS, key="current_view")
+
     st.divider()
 
-    # Navigation — reads current_view so programmatic switches (e.g. "Investigate"
-    # button) take effect on the next render via index=
-    nav_choice = st.radio(
-        "Navigation",
-        VIEWS,
-        index=VIEWS.index(st.session_state.current_view),
-    )
-    st.session_state.current_view = nav_choice
-
-    st.divider()
+    # ── Investigation status pills ────────────────────────────────────────────
+    anomalies_ss = st.session_state.anomalies
+    inv_count = len(st.session_state.investigations)
+    total_count = len(anomalies_ss)
+    total_delta = sum(a.delta for a in anomalies_ss)
+    status_icon = "✅" if (total_count > 0 and inv_count == total_count) else "⏳"
+    if total_count > 0:
+        st.markdown(f"""
+    <div class="sb-stat">
+        <span class="sb-stat-label">Investigations</span>
+        <span class="sb-stat-value">{status_icon} {inv_count}/{total_count}</span>
+    </div>
+    <div class="sb-stat">
+        <span class="sb-stat-label">Total Cost Impact</span>
+        <span class="sb-stat-value" style="color:#FCA5A5 !important">+${total_delta:,.2f}</span>
+    </div>
+    """, unsafe_allow_html=True)
+        st.markdown("")
 
     # ── Load Demo Data ────────────────────────────────────────────────────────
-    if st.button("📥 Load Demo Data", width="stretch"):
+    if st.button("📥 Load Demo Data", use_container_width=True):
         with st.spinner("Loading synthetic dataset…"):
             try:
                 z = st.session_state.z_threshold_slider
                 df = _load_cost_data(DEMO_COST_PATH)
                 ct = _load_cloudtrail(DEMO_CLOUDTRAIL_DIR)
                 anomaly_dicts = _detect_anomalies_cached(DEMO_COST_PATH, z)
-                anomalies = [Anomaly(**a) for a in anomaly_dicts]
+                anomalies_loaded = [Anomaly(**a) for a in anomaly_dicts]
                 st.session_state.update(
                     {
                         "data_loaded": True,
                         "cost_df": df,
                         "cloudtrail_logs": ct,
-                        "anomalies": anomalies,
+                        "anomalies": anomalies_loaded,
                     }
                 )
                 st.success(
-                    f"✓ {len(anomalies)} anomaly/anomalies across "
+                    f"✓ {len(anomalies_loaded)} anomaly/anomalies across "
                     f"{df['service'].nunique()} services"
                 )
             except Exception as exc:
@@ -545,15 +759,15 @@ with st.sidebar:
                     tmp_path = tmp.name
                 df = Sentinel.load_from_json(tmp_path)
                 z = st.session_state.z_threshold_slider
-                anomalies = Sentinel.detect_anomalies(df, z_threshold=z)
+                anomalies_up = Sentinel.detect_anomalies(df, z_threshold=z)
                 st.session_state.update(
                     {
                         "data_loaded": True,
                         "cost_df": df,
-                        "anomalies": anomalies,
+                        "anomalies": anomalies_up,
                     }
                 )
-                st.success(f"✓ {len(anomalies)} anomaly/anomalies detected")
+                st.success(f"✓ {len(anomalies_up)} anomaly/anomalies detected")
             except json.JSONDecodeError:
                 st.error("Invalid JSON — check file format.")
             except ValueError as exc:
@@ -580,7 +794,6 @@ with st.sidebar:
     st.caption(f"**Model:** `{MODEL_NAME}`")
     st.caption(f"**API calls:** {st.session_state.api_calls}")
     st.caption(f"**Est. API cost:** `${st.session_state.total_cost_estimate:.4f}`")
-    inv_count = len(st.session_state.investigations)
     st.caption(f"**Investigations:** {inv_count}")
 
 
@@ -608,6 +821,18 @@ if view == "Timeline":
         if df is None or df.empty:
             st.error("Loaded dataset is empty. Please reload or upload a different file.")
         else:
+            # ── Summary metric cards ──────────────────────────────────────────
+            total_delta = sum(a.delta for a in anomalies)
+            avg_z = sum(a.z_score for a in anomalies) / len(anomalies) if anomalies else 0
+            inv_done = len(st.session_state.investigations)
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Total Anomalies", len(anomalies))
+            m2.metric("Avg Z-Score", f"{avg_z:.2f}")
+            m3.metric("Total Cost Impact", f"${total_delta:,.2f}")
+            m4.metric("Investigated", f"{inv_done}/{len(anomalies)}")
+
+            st.markdown("")
+
             # ── Plotly chart ──────────────────────────────────────────────────
             palette = px.colors.qualitative.Set2
             services = df["service"].unique().tolist()
@@ -660,33 +885,29 @@ if view == "Timeline":
                 )
 
             fig.update_layout(
-                paper_bgcolor="white",
-                plot_bgcolor="white",
-                legend=dict(
-                    orientation="v",
-                    x=1.01,
-                    y=1.0,
-                    bgcolor="rgba(0,0,0,0)",
-                ),
-                xaxis=dict(showgrid=True, gridcolor="#E5E7EB", title="Date"),
-                yaxis=dict(showgrid=True, gridcolor="#E5E7EB", title="Daily Cost ($)"),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                height=420,
+                legend=dict(orientation="v", x=1.01, y=1.0, bgcolor="rgba(0,0,0,0)"),
+                xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)", title="Date"),
+                yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)", title="Daily Cost ($)"),
                 hovermode="closest",
-                margin=dict(l=60, r=40, t=40, b=60),
+                margin=dict(l=60, r=40, t=20, b=60),
             )
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
 
             # ── Anomaly table ─────────────────────────────────────────────────
             col_left, col_right = st.columns([3, 1])
             with col_left:
                 st.subheader(f"Detected Anomalies ({len(anomalies)})")
             with col_right:
-                already_done = {
+                already_done_keys = {
                     (r.anomaly.service, r.anomaly.date)
                     for r in st.session_state.investigations
                 }
                 pending = [
                     a for a in anomalies
-                    if (a.service, a.date) not in already_done
+                    if (a.service, a.date) not in already_done_keys
                 ]
                 run_all_label = (
                     f"⚡ Run All ({len(pending)} pending)"
@@ -698,7 +919,7 @@ if view == "Timeline":
                     run_all_label,
                     disabled=run_all_disabled,
                     type="primary",
-                    width="stretch",
+                    use_container_width=True,
                     key="run_all_btn",
                 ):
                     _run_all_investigations(anomalies)
@@ -712,23 +933,24 @@ if view == "Timeline":
             else:
                 sorted_anomalies = sorted(anomalies, key=lambda a: a.z_score, reverse=True)
 
-                # Styled table header
-                hdr_cols = st.columns([2.5, 2, 1.4, 1.4, 1.2, 1.5, 1.5])
-                labels = ["Service", "Date", "Cost", "Expected", "Z-Score", "Delta ($)", "Action"]
-                for col, lbl in zip(hdr_cols, labels):
+                # Styled table header — 8 columns now (added Status)
+                hdr_cols = st.columns([2.5, 2, 1.3, 1.3, 1.1, 1.3, 1.2, 1.5])
+                labels_hdr = ["Service", "Date", "Cost", "Expected", "Z-Score", "Delta ($)", "Status", "Action"]
+                for col, lbl in zip(hdr_cols, labels_hdr):
                     col.markdown(
-                        f"<span style='font-weight:700;color:{NAVY};font-size:0.82rem;"
+                        f"<span style='font-weight:700;color:var(--text-color);font-size:0.82rem;"
                         f"text-transform:uppercase;letter-spacing:0.04em'>{lbl}</span>",
                         unsafe_allow_html=True,
                     )
                 st.markdown(
-                    f"<hr style='margin:4px 0 6px 0;border:none;border-top:2px solid {NAVY}'>",
+                    "<hr style='margin:4px 0 6px 0;border:none;border-top:2px solid rgba(128,128,128,0.3)'>",
                     unsafe_allow_html=True,
                 )
 
                 for i, a in enumerate(sorted_anomalies):
                     is_high = a.z_score > 3.0
-                    row = st.columns([2.5, 2, 1.4, 1.4, 1.2, 1.5, 1.5])
+                    is_investigated = (a.service, a.date) in already_done_keys
+                    row = st.columns([2.5, 2, 1.3, 1.3, 1.1, 1.3, 1.2, 1.5])
                     row[0].write(a.service)
                     row[1].write(a.date)
                     row[2].write(f"${a.cost:.2f}")
@@ -738,14 +960,34 @@ if view == "Timeline":
                     else:
                         row[4].write(f"{a.z_score:.2f}")
                     row[5].write(f"${a.delta:.2f}")
-                    if row[6].button("🔍 Investigate", key=f"inv_{i}"):
-                        st.session_state.selected_anomaly = a
-                        st.session_state.current_view = "Investigation"
-                        st.rerun()
+                    # Status column
+                    if is_investigated:
+                        row[6].markdown("✅ Done")
+                    else:
+                        row[6].markdown("⏳ Pending")
+                    # Action button — on_click callback writes current_view before
+                    # the radio widget is instantiated, satisfying Streamlit's rule
+                    if is_investigated:
+                        with row[7]:
+                            st.markdown('<div class="btn-investigated">', unsafe_allow_html=True)
+                            st.button(
+                                "📄 View Report",
+                                key=f"inv_{i}",
+                                on_click=_on_investigate,
+                                args=(a,),
+                            )
+                            st.markdown('</div>', unsafe_allow_html=True)
+                    else:
+                        row[7].button(
+                            "🔍 Investigate",
+                            key=f"inv_{i}",
+                            on_click=_on_investigate,
+                            args=(a,),
+                        )
                     # Thin row separator
+                    sep_color = "rgba(220,38,38,0.2)" if is_high else "rgba(128,128,128,0.12)"
                     st.markdown(
-                        f"<hr style='margin:2px 0;border:none;"
-                        f"border-top:1px solid {'#FECACA' if is_high else '#F1F5F9'}'>",
+                        f"<hr style='margin:2px 0;border:none;border-top:1px solid {sep_color}'>",
                         unsafe_allow_html=True,
                     )
 
@@ -768,14 +1010,14 @@ elif view == "Investigation":
         st.markdown(
             f"""
             <div class="anomaly-callout">
-                <div style="font-size:1.15rem;font-weight:700;color:{NAVY};margin-bottom:6px">
+                <div style="font-size:1.15rem;font-weight:700;margin-bottom:6px">
                     {anomaly.service}
-                    &nbsp;<span style="font-weight:400;color:#6B7280;font-size:0.95rem">
+                    &nbsp;<span style="font-weight:400;opacity:0.65;font-size:0.95rem">
                     {anomaly.date}</span>
                 </div>
                 <span style="margin-right:18px">
                     💵 Cost <strong>${anomaly.cost:.2f}</strong>
-                    &nbsp;<span style="color:#9CA3AF">vs expected ${anomaly.expected_cost:.2f}</span>
+                    &nbsp;<span style="opacity:0.55">vs expected ${anomaly.expected_cost:.2f}</span>
                 </span>
                 <span style="margin-right:18px">
                     📊 Z-Score <strong style="color:{RED}">{anomaly.z_score:.2f}</strong>
@@ -789,6 +1031,18 @@ elif view == "Investigation":
         )
 
         inv: InvestigationReport | None = st.session_state.current_investigation
+
+        # Check full investigations list so batch-run reports are found
+        if inv is None or inv.anomaly.service != anomaly.service or inv.anomaly.date != anomaly.date:
+            cached = next(
+                (r for r in st.session_state.investigations
+                 if r.anomaly.service == anomaly.service and r.anomaly.date == anomaly.date),
+                None,
+            )
+            if cached:
+                st.session_state.current_investigation = cached
+                inv = cached
+
         already_done = (
             inv is not None
             and inv.anomaly.service == anomaly.service
@@ -796,35 +1050,215 @@ elif view == "Investigation":
         )
 
         if already_done:
-            # Metrics strip
+            # ── Investigation navigation bar ──────────────────────────────────
+            invs_list = st.session_state.investigations
+            if len(invs_list) > 1:
+                inv_labels = [f"{r.anomaly.service}  —  {r.anomaly.date}" for r in invs_list]
+                current_idx = next(
+                    (i for i, r in enumerate(invs_list)
+                     if r.anomaly.service == inv.anomaly.service and r.anomaly.date == inv.anomaly.date),
+                    0,
+                )
+                logging.getLogger(__name__).debug(
+                    "Investigation nav: showing %s/%s  idx=%d  service=%s  date=%s",
+                    current_idx + 1, len(invs_list), current_idx,
+                    inv.anomaly.service, inv.anomaly.date,
+                )
+                nav_l, nav_c, nav_r = st.columns([1, 6, 1])
+                with nav_l:
+                    st.button(
+                        "← Prev",
+                        disabled=(current_idx == 0),
+                        use_container_width=True,
+                        key="inv_prev",
+                        on_click=_nav_prev,   # state commits before rerun
+                    )
+                with nav_c:
+                    st.selectbox(
+                        "Select investigation",
+                        inv_labels,
+                        index=current_idx,
+                        key="inv_nav_sel",
+                        label_visibility="collapsed",
+                        on_change=_nav_select,  # state commits before rerun
+                    )
+                with nav_r:
+                    st.button(
+                        "Next →",
+                        disabled=(current_idx == len(invs_list) - 1),
+                        use_container_width=True,
+                        key="inv_next",
+                        on_click=_nav_next,   # state commits before rerun
+                    )
+                st.markdown("")
+
+            # ── Status banner + severity badge ────────────────────────────────
+            sev_html = _severity_badge(inv.anomaly.delta)
+            st.markdown(
+                f"""
+                <div class="status-banner {_conf_class(inv.overall_confidence)}">
+                    ● {_conf_label(inv.overall_confidence)}
+                    &nbsp;&nbsp;{sev_html}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # ── Metrics strip ─────────────────────────────────────────────────
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Elapsed", f"{inv.elapsed_seconds:.1f}s")
             m2.metric("Confidence", f"{inv.overall_confidence:.0%}")
             m3.metric("Hypotheses", len(inv.hypotheses))
             m4.metric("Ruled Out", len(inv.ruled_out))
 
+            st.markdown("")
+
+            # ── Mini event timeline ───────────────────────────────────────────
+            if inv.hypotheses:
+                try:
+                    anomaly_ts = pd.Timestamp(inv.anomaly.date)
+                    tl_fig = go.Figure()
+                    tl_fig.add_trace(go.Scatter(
+                        x=[anomaly_ts],
+                        y=[1],
+                        mode="markers+text",
+                        marker=dict(symbol="diamond", size=16, color=RED, line=dict(width=2, color="darkred")),
+                        text=[f"⚠ {inv.anomaly.service}"],
+                        textposition="top center",
+                        name="Anomaly Spike",
+                        hovertemplate=f"<b>Anomaly</b><br>{inv.anomaly.date}<br>Cost: ${inv.anomaly.cost:.2f}<extra></extra>",
+                    ))
+                    tl_fig.update_layout(
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        height=120,
+                        margin=dict(l=20, r=20, t=10, b=20),
+                        showlegend=False,
+                        xaxis=dict(showgrid=False, zeroline=False, title=""),
+                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, 2], title=""),
+                    )
+                    st.plotly_chart(tl_fig, use_container_width=True)
+                except Exception:
+                    pass  # Timeline is decorative; skip silently on any parse error
+
             st.divider()
 
-            if not inv.report_markdown:
-                st.error(
-                    "The report is empty — the Narrator agent may have returned no content. "
-                    "Check your API key and retry."
-                )
-            else:
-                st.markdown(inv.report_markdown)
+            # ── Report tabs ───────────────────────────────────────────────────
+            tab_sum, tab_ev, tab_ro, tab_rem = st.tabs(
+                ["📋 Summary", "🔗 Evidence Chain", "🚫 Ruled Out", "🔧 Remediation"]
+            )
 
-            dl_col, _ = st.columns([1, 3])
-            with dl_col:
-                st.download_button(
-                    label="⬇️ Download Report (.md)",
-                    data=inv.report_markdown,
-                    file_name=(
-                        f"{inv.anomaly.date}_"
-                        f"{inv.anomaly.service.replace(' ', '_').replace('/', '_')}.md"
-                    ),
-                    mime="text/markdown",
-                )
+            with tab_sum:
+                if not inv.report_markdown:
+                    st.error(
+                        "The report is empty — the Narrator agent may have returned no content. "
+                        "Check your API key and retry."
+                    )
+                else:
+                    st.markdown(inv.report_markdown)
+
+                dl_col, _ = st.columns([1, 3])
+                with dl_col:
+                    st.download_button(
+                        label="⬇️ Download Report (.md)",
+                        data=inv.report_markdown or "",
+                        file_name=(
+                            f"{inv.anomaly.date}_"
+                            f"{inv.anomaly.service.replace(' ', '_').replace('/', '_')}.md"
+                        ),
+                        mime="text/markdown",
+                    )
+
+            with tab_ev:
+                st.subheader(f"Hypotheses ({len(inv.hypotheses)})")
+                if not inv.hypotheses:
+                    st.warning(
+                        "No hypotheses were generated for this anomaly. "
+                        "This can happen when the LLM cannot establish causal evidence. "
+                        "Check the raw report in the Summary tab for details."
+                    )
+                else:
+                    for i_h in range(0, len(inv.hypotheses), 2):
+                        ev_cols = st.columns(2)
+                        for j_h, ev_col in enumerate(ev_cols):
+                            idx_h = i_h + j_h
+                            if idx_h >= len(inv.hypotheses):
+                                break
+                            h = inv.hypotheses[idx_h]
+                            conf_color = _confidence_color(h.confidence)
+                            ev_count = len(h.evidence) if h.evidence else 0
+                            with ev_col:
+                                with st.expander(
+                                    f"#{h.rank}  {h.root_cause[:70]}{'…' if len(h.root_cause) > 70 else ''}",
+                                    expanded=(h.rank == 1),
+                                ):
+                                    st.markdown(
+                                        f'<div style="border-left:4px solid {conf_color};padding-left:10px">',
+                                        unsafe_allow_html=True,
+                                    )
+                                    st.progress(h.confidence, text=f"Confidence: {h.confidence:.0%}")
+                                    st.caption(f"📎 {ev_count} evidence item(s)")
+                                    if h.evidence:
+                                        for item in h.evidence:
+                                            st.markdown(f"- {item}")
+                                    if h.cost_calculation:
+                                        st.markdown("**Cost Calculation:**")
+                                        st.markdown(
+                                            f'<div class="cost-box">{h.cost_calculation}</div>',
+                                            unsafe_allow_html=True,
+                                        )
+                                    if h.causal_mechanism:
+                                        st.info(h.causal_mechanism)
+                                    st.markdown('</div>', unsafe_allow_html=True)
+
+            with tab_ro:
+                st.subheader(f"Ruled Out Events ({len(inv.ruled_out)})")
+                if not inv.ruled_out:
+                    st.caption("No events were explicitly ruled out in this investigation.")
+                else:
+                    hdr_ro = st.columns([2, 1.5, 3])
+                    hdr_ro[0].markdown("**Event**")
+                    hdr_ro[1].markdown("**Category**")
+                    hdr_ro[2].markdown("**Reason**")
+                    st.markdown(
+                        "<hr style='margin:4px 0 8px 0;border:none;border-top:1px solid rgba(128,128,128,0.2)'>",
+                        unsafe_allow_html=True,
+                    )
+                    for ro in inv.ruled_out:
+                        date_str = ro.event_time[:10] if ro.event_time else "N/A"
+                        row_cols = st.columns([2, 1.5, 3])
+                        row_cols[0].write(f"{ro.event_name}\n\n_{date_str}_")
+                        row_cols[1].markdown(_category_badge(ro.category), unsafe_allow_html=True)
+                        row_cols[2].write(ro.reason)
+                        st.markdown(
+                            "<hr style='margin:2px 0;border:none;border-top:1px solid rgba(128,128,128,0.1)'>",
+                            unsafe_allow_html=True,
+                        )
+
+            with tab_rem:
+                if inv.remediation:
+                    st.markdown(inv.remediation)
+                else:
+                    st.info("No remediation steps extracted.")
+                dl_rem_col, _ = st.columns([1, 3])
+                with dl_rem_col:
+                    st.download_button(
+                        label="⬇️ Download Report (.md)",
+                        data=inv.report_markdown or "",
+                        file_name=(
+                            f"{inv.anomaly.date}_"
+                            f"{inv.anomaly.service.replace(' ', '_').replace('/', '_')}_full.md"
+                        ),
+                        mime="text/markdown",
+                        key="dl_rem",
+                    )
+
+        elif st.session_state._auto_run:
+            # Triggered from Timeline "Investigate" button — run immediately
+            st.session_state._auto_run = False
+            _run_investigation(anomaly)
         else:
+            # User navigated here manually without selecting from Timeline
             if not st.session_state.cloudtrail_logs:
                 st.info(
                     "ℹ️ No CloudTrail logs loaded — the demo CloudTrail dataset will be "
@@ -853,16 +1287,15 @@ elif view == "Evidence":
         )
     else:
         # Investigation header card
+        conf_color_ev = _confidence_color(inv.overall_confidence)
         st.markdown(
             f"""
             <div class="info-card">
-                <strong style="font-size:1.05rem;color:{NAVY}">{inv.anomaly.service}</strong>
-                &nbsp;&nbsp;<span style="color:#6B7280">{inv.anomaly.date}</span>
+                <strong style="font-size:1.05rem">{inv.anomaly.service}</strong>
+                &nbsp;&nbsp;<span style="opacity:0.65">{inv.anomaly.date}</span>
                 &nbsp;&nbsp;·&nbsp;&nbsp;
                 Overall confidence:
-                <strong style="color:{GREEN if inv.overall_confidence >= 0.8
-                                       else (ORANGE if inv.overall_confidence >= 0.55
-                                             else RED)}">
+                <strong style="color:{conf_color_ev}">
                 {inv.overall_confidence:.0%}
                 </strong>
             </div>
@@ -870,7 +1303,7 @@ elif view == "Evidence":
             unsafe_allow_html=True,
         )
 
-        # ── Hypotheses ────────────────────────────────────────────────────────
+        # ── Hypotheses — 2-column card layout ────────────────────────────────
         st.subheader(f"Hypotheses ({len(inv.hypotheses)})")
 
         if not inv.hypotheses:
@@ -880,50 +1313,63 @@ elif view == "Evidence":
                 "Check the raw report in the **Investigation** view for details."
             )
         else:
-            for h in inv.hypotheses:
-                with st.expander(
-                    f"Hypothesis {h.rank}: {h.root_cause[:80]}{'…' if len(h.root_cause) > 80 else ''}"
-                    f"  —  {h.confidence:.0%} confidence"
-                ):
-                    st.progress(
-                        h.confidence,
-                        text=f"Confidence: {h.confidence:.0%}",
-                    )
+            for i_h in range(0, len(inv.hypotheses), 2):
+                ev_cols = st.columns(2)
+                for j_h, ev_col in enumerate(ev_cols):
+                    idx_h = i_h + j_h
+                    if idx_h >= len(inv.hypotheses):
+                        break
+                    h = inv.hypotheses[idx_h]
+                    conf_color = _confidence_color(h.confidence)
+                    ev_count = len(h.evidence) if h.evidence else 0
+                    with ev_col:
+                        with st.expander(
+                            f"#{h.rank}  {h.root_cause[:70]}{'…' if len(h.root_cause) > 70 else ''}",
+                            expanded=(h.rank == 1),
+                        ):
+                            st.markdown(
+                                f'<div style="border-left:4px solid {conf_color};padding-left:10px">',
+                                unsafe_allow_html=True,
+                            )
+                            st.progress(h.confidence, text=f"Confidence: {h.confidence:.0%}")
+                            st.caption(f"📎 {ev_count} evidence item(s)")
+                            if h.evidence:
+                                for item in h.evidence:
+                                    st.markdown(f"- {item}")
+                            if h.cost_calculation:
+                                st.markdown("**Cost Calculation:**")
+                                st.markdown(
+                                    f'<div class="cost-box">{h.cost_calculation}</div>',
+                                    unsafe_allow_html=True,
+                                )
+                            if h.causal_mechanism:
+                                st.info(h.causal_mechanism)
+                            st.markdown('</div>', unsafe_allow_html=True)
 
-                    st.markdown("**Evidence:**")
-                    if h.evidence:
-                        for item in h.evidence:
-                            st.markdown(f"- {item}")
-                    else:
-                        st.caption("No evidence items recorded.")
-
-                    st.markdown("**Cost Calculation:**")
-                    if h.cost_calculation:
-                        st.markdown(
-                            f'<div class="cost-box">{h.cost_calculation}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.caption("No cost calculation available.")
-                    st.markdown("")
-
-                    st.markdown("**Causal Mechanism:**")
-                    if h.causal_mechanism:
-                        st.info(h.causal_mechanism)
-                    else:
-                        st.caption("No causal mechanism recorded.")
-
-        # ── Ruled-out events ──────────────────────────────────────────────────
+        # ── Ruled-out events — table layout ───────────────────────────────────
         st.subheader(f"Ruled Out Events ({len(inv.ruled_out)})")
 
         if not inv.ruled_out:
             st.caption("No events were explicitly ruled out in this investigation.")
         else:
+            hdr_ev = st.columns([2, 1.8, 3.5])
+            hdr_ev[0].markdown("**Event**")
+            hdr_ev[1].markdown("**Category**")
+            hdr_ev[2].markdown("**Reason**")
+            st.markdown(
+                "<hr style='margin:4px 0 8px 0;border:none;border-top:1px solid rgba(128,128,128,0.2)'>",
+                unsafe_allow_html=True,
+            )
             for ro in inv.ruled_out:
                 date_str = ro.event_time[:10] if ro.event_time else "N/A"
-                with st.expander(f"{ro.event_name}  ·  {date_str}"):
-                    st.markdown(_category_badge(ro.category), unsafe_allow_html=True)
-                    st.markdown(f"**Reason:** {ro.reason}")
+                row_cols = st.columns([2, 1.8, 3.5])
+                row_cols[0].write(f"{ro.event_name}\n\n_{date_str}_")
+                row_cols[1].markdown(_category_badge(ro.category), unsafe_allow_html=True)
+                row_cols[2].write(ro.reason)
+                st.markdown(
+                    "<hr style='margin:2px 0;border:none;border-top:1px solid rgba(128,128,128,0.1)'>",
+                    unsafe_allow_html=True,
+                )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # VIEW 4 — COMPARE INVESTIGATIONS
@@ -976,23 +1422,23 @@ elif view == "Compare":
 
             def _render_summary(inv: InvestigationReport, col) -> None:
                 top = inv.hypotheses[0] if inv.hypotheses else None
-                root_cause = (top.root_cause[:85] + "…") if top and len(top.root_cause) > 85 else (top.root_cause if top else "—")
-                conf_color = (
-                    GREEN if inv.overall_confidence >= 0.8
-                    else (ORANGE if inv.overall_confidence >= 0.55 else RED)
+                root_cause = (
+                    (top.root_cause[:85] + "…")
+                    if top and len(top.root_cause) > 85
+                    else (top.root_cause if top else "—")
                 )
+                conf_color = _confidence_color(inv.overall_confidence)
                 with col:
                     st.markdown(
                         f"""
                         <div class="info-card">
-                            <div style="font-size:1.05rem;font-weight:700;
-                                        color:{NAVY};margin-bottom:8px">
+                            <div style="font-size:1.05rem;font-weight:700;margin-bottom:8px">
                                 {inv.anomaly.service}
                             </div>
                             <p style="margin:2px 0"><b>Date:</b> {inv.anomaly.date}</p>
                             <p style="margin:2px 0">
                                 <b>Cost:</b> ${inv.anomaly.cost:.2f}
-                                <span style="color:#9CA3AF">
+                                <span style="opacity:0.55">
                                     (expected ${inv.anomaly.expected_cost:.2f})
                                 </span>
                             </p>
@@ -1044,7 +1490,41 @@ elif view == "Compare":
                     ],
                 }
             )
-            st.dataframe(cmp_df, hide_index=True, width="stretch")
+            st.dataframe(cmp_df, hide_index=True, use_container_width=True)
+
+            # ── Visual comparison grouped bar chart ───────────────────────────
+            st.subheader("Visual Comparison")
+            ev_a = sum(len(h.evidence) for h in inv_a.hypotheses) if inv_a.hypotheses else 0
+            ev_b = sum(len(h.evidence) for h in inv_b.hypotheses) if inv_b.hypotheses else 0
+
+            bar_fig = go.Figure(data=[
+                go.Bar(
+                    name=labels[idx_a][:30],
+                    x=["Confidence", "Evidence Items", "Hypotheses", "Ruled Out"],
+                    y=[inv_a.overall_confidence * 100, ev_a, len(inv_a.hypotheses), len(inv_a.ruled_out)],
+                    marker_color=BLUE,
+                    text=[f"{inv_a.overall_confidence:.0%}", ev_a, len(inv_a.hypotheses), len(inv_a.ruled_out)],
+                    textposition="outside",
+                ),
+                go.Bar(
+                    name=labels[idx_b][:30],
+                    x=["Confidence", "Evidence Items", "Hypotheses", "Ruled Out"],
+                    y=[inv_b.overall_confidence * 100, ev_b, len(inv_b.hypotheses), len(inv_b.ruled_out)],
+                    marker_color=GREEN,
+                    text=[f"{inv_b.overall_confidence:.0%}", ev_b, len(inv_b.hypotheses), len(inv_b.ruled_out)],
+                    textposition="outside",
+                ),
+            ])
+            bar_fig.update_layout(
+                barmode="group",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                height=320,
+                margin=dict(l=40, r=40, t=20, b=40),
+                yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)"),
+                legend=dict(bgcolor="rgba(0,0,0,0)"),
+            )
+            st.plotly_chart(bar_fig, use_container_width=True)
 
             # ── Recurring pattern detection ───────────────────────────────────
             cats_a = {h.category for h in inv_a.hypotheses}
@@ -1069,12 +1549,14 @@ elif view == "Feedback":
     elif inv is None:
         st.warning("Run an investigation first, then come back here to rate it.")
     else:
+        conf_color_fb = _confidence_color(inv.overall_confidence)
         st.markdown(
             f"""
             <div class="info-card">
-                <strong style="color:{NAVY}">{inv.anomaly.service}</strong>
+                <strong>{inv.anomaly.service}</strong>
                 &nbsp;·&nbsp; {inv.anomaly.date}
-                &nbsp;·&nbsp; Confidence: <strong>{inv.overall_confidence:.0%}</strong>
+                &nbsp;·&nbsp; Confidence:
+                <strong style="color:{conf_color_fb}">{inv.overall_confidence:.0%}</strong>
             </div>
             """,
             unsafe_allow_html=True,
@@ -1164,7 +1646,8 @@ elif view == "Feedback":
 st.markdown(
     "<div class='cs-footer'>"
     "CostSherlock v1.0 &nbsp;|&nbsp; Vatsal Naik &amp; Priti Ghosh "
-    "&nbsp;|&nbsp; Northeastern University"
+    "&nbsp;|&nbsp; Northeastern University &nbsp;|&nbsp; "
+    f"Model: <code>{MODEL_NAME}</code>"
     "</div>",
     unsafe_allow_html=True,
 )

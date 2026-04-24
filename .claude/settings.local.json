@@ -22,7 +22,12 @@
       "Bash(venv/Scripts/python -c \"from rich.console import Console; c = Console\\(\\); c.print\\('[green]rich ok[/green]'\\)\")",
       "Bash(mkdir -p reports/demo)",
       "Bash(venv/Scripts/python pipeline.py --cost data/synthetic/demo_cost.json --logs data/synthetic/demo_cloudtrail --output reports)",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(venv/Scripts/python:*)",
+      "Bash(venv/Scripts/streamlit --version)",
+      "Bash(venv/Scripts/streamlit run:*)",
+      "Bash(mkdir -p ~/.streamlit)",
+      "Read(//c/Users/Vatsal/.streamlit/**)"
     ]
   }
 }
