@@ -19,5 +19,40 @@
     "root_cause_category": "logging_misconfiguration",
     "root_cause_event": "PutMetricAlarm",
     "description": "Log verbosity alarm set to DEBUG level by ops-admin at 2026-02-06T14:30Z, triggering high-frequency metric ingestion and log storage charges"
+  },
+  {
+    "anomaly_service": "Amazon VPC",
+    "anomaly_date": "2026-02-11",
+    "root_cause_category": "network_misconfiguration",
+    "root_cause_event": "CreateNatGateway",
+    "description": "NAT Gateway created by infra-bot at 2026-02-10T18:45Z; all private-subnet traffic now exits through it, incurring per-GB data-processing charges at $0.045/GB"
+  },
+  {
+    "anomaly_service": "Amazon RDS",
+    "anomaly_date": "2026-02-17",
+    "root_cause_category": "compute_overprovisioning",
+    "root_cause_event": "ModifyDBInstance",
+    "description": "Reserved instance pricing expired; dba-admin modified prod-postgres-01 to on-demand billing at 2026-02-16T22:00Z, tripling the hourly instance cost from $0.48/hr to $1.40/hr"
+  },
+  {
+    "anomaly_service": "AWS Lambda",
+    "anomaly_date": "2026-02-21",
+    "root_cause_category": "compute_overprovisioning",
+    "root_cause_event": "UpdateFunctionConfiguration20150331",
+    "description": "dev-bob raised data-pipeline-processor timeout from 30s to 900s at 2026-02-20T16:10Z; recursive invocation pattern caused each call to run to full timeout, multiplying GB-second charges by ~30x"
+  },
+  {
+    "anomaly_service": "Amazon EBS",
+    "anomaly_date": "2026-02-24",
+    "root_cause_category": "storage_misconfiguration",
+    "root_cause_event": "TerminateInstances",
+    "description": "deploy-bot terminated 4 EC2 instances at 2026-02-23T20:30Z; attached EBS volumes were not deleted on termination, leaving 800 GB of orphaned gp3 volumes accruing $0.08/GB-month storage charges"
+  },
+  {
+    "anomaly_service": "Amazon S3",
+    "anomaly_date": "2026-02-27",
+    "root_cause_category": "network_misconfiguration",
+    "root_cause_event": "PutBucketAccelerateConfiguration",
+    "description": "dev-alice enabled S3 Transfer Acceleration on prod-assets-cdn at 2026-02-26T14:20Z, adding $0.04/GB surcharge on top of standard transfer pricing for all PUT/GET operations"
   }
 ]

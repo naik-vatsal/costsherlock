@@ -1,0 +1,112 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/deploy-bot",
+        "accountId": "123456789012",
+        "userName": "deploy-bot"
+      },
+      "eventTime": "2026-02-23T20:30:00Z",
+      "eventSource": "ec2.amazonaws.com",
+      "eventName": "TerminateInstances",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.1.45",
+      "requestParameters": {
+        "instancesSet": {
+          "items": [
+            {"instanceId": "i-0ebs000000000001"},
+            {"instanceId": "i-0ebs000000000002"},
+            {"instanceId": "i-0ebs000000000003"},
+            {"instanceId": "i-0ebs000000000004"}
+          ]
+        }
+      },
+      "responseElements": {
+        "instancesSet": {
+          "items": [
+            {
+              "instanceId": "i-0ebs000000000001",
+              "currentState": {"code": 32, "name": "shutting-down"},
+              "previousState": {"code": 16, "name": "running"}
+            },
+            {
+              "instanceId": "i-0ebs000000000002",
+              "currentState": {"code": 32, "name": "shutting-down"},
+              "previousState": {"code": 16, "name": "running"}
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "ARN": "arn:aws:ec2:us-east-1:123456789012:instance/i-0ebs000000000001",
+          "accountId": "123456789012",
+          "type": "AWS::EC2::Instance"
+        },
+        {
+          "ARN": "arn:aws:ec2:us-east-1:123456789012:instance/i-0ebs000000000002",
+          "accountId": "123456789012",
+          "type": "AWS::EC2::Instance"
+        }
+      ],
+      "eventID": "e5f6a7b8-c9d0-1234-efab-345678900001",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/ops-monitor",
+        "accountId": "123456789012",
+        "userName": "ops-monitor"
+      },
+      "eventTime": "2026-02-24T07:00:00Z",
+      "eventSource": "ec2.amazonaws.com",
+      "eventName": "DescribeVolumes",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.2.11",
+      "requestParameters": {
+        "filterSet": {
+          "items": [{"name": "status", "valueSet": {"items": [{"value": "available"}]}}]
+        }
+      },
+      "resources": [],
+      "eventID": "e5f6a7b8-c9d0-1234-efab-345678900002",
+      "readOnly": true,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/dev-alice",
+        "accountId": "123456789012",
+        "userName": "dev-alice"
+      },
+      "eventTime": "2026-02-23T19:00:00Z",
+      "eventSource": "ec2.amazonaws.com",
+      "eventName": "CreateAutoScalingGroup",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.3.22",
+      "requestParameters": {
+        "autoScalingGroupName": "web-asg-v2",
+        "minSize": 2,
+        "maxSize": 10,
+        "desiredCapacity": 4
+      },
+      "resources": [
+        {
+          "ARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:web-asg-v2",
+          "accountId": "123456789012",
+          "type": "AWS::AutoScaling::AutoScalingGroup"
+        }
+      ],
+      "eventID": "e5f6a7b8-c9d0-1234-efab-345678900003",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    }
+  ]
+}

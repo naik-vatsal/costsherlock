@@ -1,0 +1,88 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/dev-alice",
+        "accountId": "123456789012",
+        "userName": "dev-alice"
+      },
+      "eventTime": "2026-02-26T14:20:00Z",
+      "eventSource": "s3.amazonaws.com",
+      "eventName": "PutBucketAccelerateConfiguration",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.3.22",
+      "requestParameters": {
+        "bucketName": "prod-assets-cdn",
+        "AccelerateConfiguration": {
+          "Status": "Enabled"
+        }
+      },
+      "responseElements": null,
+      "resources": [
+        {
+          "ARN": "arn:aws:s3:::prod-assets-cdn",
+          "accountId": "123456789012",
+          "type": "AWS::S3::Bucket"
+        }
+      ],
+      "eventID": "f6a7b8c9-d0e1-2345-fabc-456789000001",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/dev-alice",
+        "accountId": "123456789012",
+        "userName": "dev-alice"
+      },
+      "eventTime": "2026-02-26T14:15:00Z",
+      "eventSource": "s3.amazonaws.com",
+      "eventName": "PutBucketTagging",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.3.22",
+      "requestParameters": {
+        "bucketName": "prod-assets-cdn",
+        "Tagging": {
+          "TagSet": [
+            {"Key": "env", "Value": "production"},
+            {"Key": "owner", "Value": "platform-team"}
+          ]
+        }
+      },
+      "responseElements": null,
+      "resources": [
+        {
+          "ARN": "arn:aws:s3:::prod-assets-cdn",
+          "accountId": "123456789012",
+          "type": "AWS::S3::Bucket"
+        }
+      ],
+      "eventID": "f6a7b8c9-d0e1-2345-fabc-456789000002",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/ops-monitor",
+        "accountId": "123456789012",
+        "userName": "ops-monitor"
+      },
+      "eventTime": "2026-02-27T08:30:00Z",
+      "eventSource": "s3.amazonaws.com",
+      "eventName": "ListBuckets",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.2.11",
+      "requestParameters": {},
+      "resources": [],
+      "eventID": "f6a7b8c9-d0e1-2345-fabc-456789000003",
+      "readOnly": true,
+      "eventType": "AwsApiCall"
+    }
+  ]
+}

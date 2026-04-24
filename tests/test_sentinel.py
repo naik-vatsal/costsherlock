@@ -120,18 +120,20 @@ class TestKnownAnomalies:
 
 class TestNormalDaysNotFlagged:
     def test_no_false_positives_rds(self):
-        """RDS has no injected spikes; no anomalies expected."""
+        """RDS has exactly one injected spike (day 48, 2026-02-17); only that date expected."""
         df = Sentinel.load_from_json(DEMO_JSON)
         anomalies = Sentinel.detect_anomalies(df)
         rds_hits = [a for a in anomalies if a.service == "Amazon RDS"]
-        assert rds_hits == [], f"Unexpected RDS anomalies: {rds_hits}"
+        assert len(rds_hits) == 1, f"Expected 1 RDS anomaly, got: {rds_hits}"
+        assert rds_hits[0].date == "2026-02-17", f"Wrong RDS anomaly date: {rds_hits[0].date}"
 
     def test_no_false_positives_lambda(self):
-        """Lambda has no injected spikes; no anomalies expected."""
+        """Lambda has exactly one injected spike (day 52, 2026-02-21); only that date expected."""
         df = Sentinel.load_from_json(DEMO_JSON)
         anomalies = Sentinel.detect_anomalies(df)
         lambda_hits = [a for a in anomalies if a.service == "AWS Lambda"]
-        assert lambda_hits == [], f"Unexpected Lambda anomalies: {lambda_hits}"
+        assert len(lambda_hits) == 1, f"Expected 1 Lambda anomaly, got: {lambda_hits}"
+        assert lambda_hits[0].date == "2026-02-21", f"Wrong Lambda anomaly date: {lambda_hits[0].date}"
 
     def test_perfectly_flat_not_flagged(self, tmp_path):
         """Perfectly flat costs → rolling std = 0 → no anomalies."""

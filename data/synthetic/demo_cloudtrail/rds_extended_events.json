@@ -1,0 +1,95 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/dba-admin",
+        "accountId": "123456789012",
+        "userName": "dba-admin"
+      },
+      "eventTime": "2026-02-16T22:00:00Z",
+      "eventSource": "rds.amazonaws.com",
+      "eventName": "ModifyDBInstance",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.4.10",
+      "requestParameters": {
+        "dBInstanceIdentifier": "prod-postgres-01",
+        "dBInstanceClass": "db.r5.2xlarge",
+        "applyImmediately": true,
+        "licenseModel": "on-demand-billing"
+      },
+      "responseElements": {
+        "dBInstance": {
+          "dBInstanceIdentifier": "prod-postgres-01",
+          "dBInstanceClass": "db.r5.2xlarge",
+          "dBInstanceStatus": "modifying"
+        }
+      },
+      "resources": [
+        {
+          "ARN": "arn:aws:rds:us-east-1:123456789012:db:prod-postgres-01",
+          "accountId": "123456789012",
+          "type": "AWS::RDS::DBInstance"
+        }
+      ],
+      "eventID": "c3d4e5f6-a7b8-9012-cdef-123456789001",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/dba-admin",
+        "accountId": "123456789012",
+        "userName": "dba-admin"
+      },
+      "eventTime": "2026-02-16T21:45:00Z",
+      "eventSource": "rds.amazonaws.com",
+      "eventName": "CreateDBSnapshot",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.4.10",
+      "requestParameters": {
+        "dBInstanceIdentifier": "prod-postgres-01",
+        "dBSnapshotIdentifier": "prod-postgres-01-pre-modify-20260216"
+      },
+      "responseElements": {
+        "dBSnapshot": {
+          "dBSnapshotIdentifier": "prod-postgres-01-pre-modify-20260216",
+          "dBInstanceIdentifier": "prod-postgres-01",
+          "status": "creating"
+        }
+      },
+      "resources": [
+        {
+          "ARN": "arn:aws:rds:us-east-1:123456789012:snapshot:prod-postgres-01-pre-modify-20260216",
+          "accountId": "123456789012",
+          "type": "AWS::RDS::DBSnapshot"
+        }
+      ],
+      "eventID": "c3d4e5f6-a7b8-9012-cdef-123456789002",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/ops-monitor",
+        "accountId": "123456789012",
+        "userName": "ops-monitor"
+      },
+      "eventTime": "2026-02-17T08:00:00Z",
+      "eventSource": "rds.amazonaws.com",
+      "eventName": "DescribeDBInstances",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.2.11",
+      "requestParameters": {},
+      "resources": [],
+      "eventID": "c3d4e5f6-a7b8-9012-cdef-123456789003",
+      "readOnly": true,
+      "eventType": "AwsApiCall"
+    }
+  ]
+}

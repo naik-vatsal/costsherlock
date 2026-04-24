@@ -1,29 +1,43 @@
 {
   "metrics": {
     "causal_attribution_accuracy": {
-      "accuracy": 1.0,
-      "correct_count": 3,
-      "total": 3,
+      "accuracy": 0.8,
+      "correct_count": 4,
+      "total": 5,
       "per_anomaly": [
+        {
+          "service": "Amazon VPC",
+          "date": "2026-02-11",
+          "expected": "network_misconfiguration",
+          "actual": "network_misconfiguration",
+          "correct": true
+        },
+        {
+          "service": "Amazon EBS",
+          "date": "2026-02-24",
+          "expected": "storage_misconfiguration",
+          "actual": "storage_overprovisioning",
+          "correct": true
+        },
+        {
+          "service": "AWS Lambda",
+          "date": "2026-02-21",
+          "expected": "compute_overprovisioning",
+          "actual": "lambda_misconfiguration",
+          "correct": false
+        },
+        {
+          "service": "Amazon S3",
+          "date": "2026-02-27",
+          "expected": "network_misconfiguration",
+          "actual": "data_transfer_spike",
+          "correct": true
+        },
         {
           "service": "Amazon S3",
           "date": "2026-02-04",
           "expected": "storage_misconfiguration",
           "actual": "storage_misconfiguration",
-          "correct": true
-        },
-        {
-          "service": "Amazon EC2",
-          "date": "2026-01-30",
-          "expected": "compute_overprovisioning",
-          "actual": "compute_overprovisioning",
-          "correct": true
-        },
-        {
-          "service": "Amazon CloudWatch",
-          "date": "2026-02-07",
-          "expected": "logging_misconfiguration",
-          "actual": "logging_misconfiguration",
           "correct": true
         }
       ],
@@ -31,79 +45,115 @@
       "pass": true
     },
     "evidence_recall": {
-      "average_recall": 1.0,
+      "average_recall": 0.8,
       "per_anomaly": [
+        {
+          "service": "Amazon VPC",
+          "date": "2026-02-11",
+          "gt_event": "CreateNatGateway",
+          "found": true,
+          "recall": 1.0
+        },
+        {
+          "service": "Amazon EBS",
+          "date": "2026-02-24",
+          "gt_event": "TerminateInstances",
+          "found": true,
+          "recall": 1.0
+        },
+        {
+          "service": "AWS Lambda",
+          "date": "2026-02-21",
+          "gt_event": "UpdateFunctionConfiguration20150331",
+          "found": false,
+          "recall": 0.0
+        },
+        {
+          "service": "Amazon S3",
+          "date": "2026-02-27",
+          "gt_event": "PutBucketAccelerateConfiguration",
+          "found": true,
+          "recall": 1.0
+        },
         {
           "service": "Amazon S3",
           "date": "2026-02-04",
           "gt_event": "PutBucketLifecycleConfiguration",
           "found": true,
           "recall": 1.0
-        },
-        {
-          "service": "Amazon EC2",
-          "date": "2026-01-30",
-          "gt_event": "RunInstances",
-          "found": true,
-          "recall": 1.0
-        },
-        {
-          "service": "Amazon CloudWatch",
-          "date": "2026-02-07",
-          "gt_event": "PutMetricAlarm",
-          "found": true,
-          "recall": 1.0
         }
       ],
       "target": 0.85,
-      "pass": true
+      "pass": false
     },
     "faithfulness_score": {
-      "average_score": 0.9333,
+      "average_score": 0.8885,
       "method": "citation_ratio",
       "per_report": [
         {
+          "service": "Amazon VPC",
+          "date": "2026-02-11",
+          "score": 0.8421,
+          "method": "citation_ratio"
+        },
+        {
+          "service": "Amazon EBS",
+          "date": "2026-02-24",
+          "score": 1.0,
+          "method": "citation_ratio"
+        },
+        {
+          "service": "AWS Lambda",
+          "date": "2026-02-21",
+          "score": 0.9143,
+          "method": "citation_ratio"
+        },
+        {
+          "service": "Amazon S3",
+          "date": "2026-02-27",
+          "score": 0.8039,
+          "method": "citation_ratio"
+        },
+        {
           "service": "Amazon S3",
           "date": "2026-02-04",
-          "score": 1.0,
-          "method": "citation_ratio"
-        },
-        {
-          "service": "Amazon EC2",
-          "date": "2026-01-30",
-          "score": 0.8,
-          "method": "citation_ratio"
-        },
-        {
-          "service": "Amazon CloudWatch",
-          "date": "2026-02-07",
-          "score": 1.0,
+          "score": 0.8824,
           "method": "citation_ratio"
         }
       ],
       "target": 0.9,
-      "pass": true
+      "pass": false
     },
     "time_to_explanation": {
       "per_anomaly": [
         {
+          "service": "Amazon VPC",
+          "date": "2026-02-11",
+          "elapsed_seconds": 54.68
+        },
+        {
+          "service": "Amazon EBS",
+          "date": "2026-02-24",
+          "elapsed_seconds": 62.22
+        },
+        {
+          "service": "AWS Lambda",
+          "date": "2026-02-21",
+          "elapsed_seconds": 59.67
+        },
+        {
+          "service": "Amazon S3",
+          "date": "2026-02-27",
+          "elapsed_seconds": 57.43
+        },
+        {
           "service": "Amazon S3",
           "date": "2026-02-04",
-          "elapsed_seconds": 30.77
-        },
-        {
-          "service": "Amazon EC2",
-          "date": "2026-01-30",
-          "elapsed_seconds": 36.56
-        },
-        {
-          "service": "Amazon CloudWatch",
-          "date": "2026-02-07",
-          "elapsed_seconds": 30.46
+          "elapsed_seconds": 69.77
         }
       ],
-      "average_seconds": 32.6,
-      "max_seconds": 36.56,
+      "average_seconds": 60.75,
+      "max_seconds": 69.77,
       "target": 300.0,
       "pass": true
     },
@@ -129,9 +179,9 @@
     }
   },
   "meta": {
-    "reports_evaluated": 3,
-    "estimated_api_cost_usd": 0.076626,
-    "total_eval_seconds": 111.27,
+    "reports_evaluated": 5,
+    "estimated_api_cost_usd": 0.249162,
+    "total_eval_seconds": 357.16,
     "ground_truth_path": "C:\\Users\\Vatsal\\Documents\\costsherlock\\data\\synthetic\\ground_truth.json",
     "feedback_dir": "C:\\Users\\Vatsal\\Documents\\costsherlock\\data\\feedback"
   }

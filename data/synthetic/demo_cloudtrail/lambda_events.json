@@ -1,0 +1,93 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/dev-bob",
+        "accountId": "123456789012",
+        "userName": "dev-bob"
+      },
+      "eventTime": "2026-02-20T16:10:00Z",
+      "eventSource": "lambda.amazonaws.com",
+      "eventName": "UpdateFunctionConfiguration20150331",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.3.55",
+      "requestParameters": {
+        "functionName": "data-pipeline-processor",
+        "timeout": 900,
+        "memorySize": 1024
+      },
+      "responseElements": {
+        "functionName": "data-pipeline-processor",
+        "functionArn": "arn:aws:lambda:us-east-1:123456789012:function:data-pipeline-processor",
+        "runtime": "python3.11",
+        "timeout": 900,
+        "memorySize": 1024
+      },
+      "resources": [
+        {
+          "ARN": "arn:aws:lambda:us-east-1:123456789012:function:data-pipeline-processor",
+          "accountId": "123456789012",
+          "type": "AWS::Lambda::Function"
+        }
+      ],
+      "eventID": "d4e5f6a7-b8c9-0123-defa-234567890001",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/dev-bob",
+        "accountId": "123456789012",
+        "userName": "dev-bob"
+      },
+      "eventTime": "2026-02-20T16:05:00Z",
+      "eventSource": "lambda.amazonaws.com",
+      "eventName": "CreateFunction20150331",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.3.55",
+      "requestParameters": {
+        "functionName": "data-pipeline-dlq-handler",
+        "runtime": "python3.11",
+        "timeout": 30,
+        "memorySize": 128
+      },
+      "responseElements": {
+        "functionName": "data-pipeline-dlq-handler",
+        "functionArn": "arn:aws:lambda:us-east-1:123456789012:function:data-pipeline-dlq-handler"
+      },
+      "resources": [
+        {
+          "ARN": "arn:aws:lambda:us-east-1:123456789012:function:data-pipeline-dlq-handler",
+          "accountId": "123456789012",
+          "type": "AWS::Lambda::Function"
+        }
+      ],
+      "eventID": "d4e5f6a7-b8c9-0123-defa-234567890002",
+      "readOnly": false,
+      "eventType": "AwsApiCall"
+    },
+    {
+      "eventVersion": "1.08",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::123456789012:user/ops-monitor",
+        "accountId": "123456789012",
+        "userName": "ops-monitor"
+      },
+      "eventTime": "2026-02-21T09:00:00Z",
+      "eventSource": "lambda.amazonaws.com",
+      "eventName": "ListFunctions20150331",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "10.0.2.11",
+      "requestParameters": {},
+      "resources": [],
+      "eventID": "d4e5f6a7-b8c9-0123-defa-234567890003",
+      "readOnly": true,
+      "eventType": "AwsApiCall"
+    }
+  ]
+}

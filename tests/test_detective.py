@@ -49,8 +49,9 @@ CW_ANOMALY = Anomaly(
 class TestLoadCloudtrailLogs:
     def test_loads_all_files(self) -> None:
         events = Detective.load_cloudtrail_logs(DEMO_LOG_DIR)
-        # 5 files: ec2(8) + s3(7) + cloudwatch(4) + rds(3) + noise(12) = 34
-        assert len(events) == 34
+        # 10 files: ec2(8) + s3(7) + cloudwatch(4) + rds(3) + noise(12)
+        #         + vpc(3) + rds_extended(3) + lambda(3) + ebs(3) + s3_transfer(3) = 49
+        assert len(events) == 49
 
     def test_handles_records_wrapper_format(self) -> None:
         """ec2_events.json uses {"Records": [...]} — must be unwrapped."""
