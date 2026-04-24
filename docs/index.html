@@ -1123,6 +1123,261 @@ footer {
 .delay-2 { animation-delay: 0.2s; }
 .delay-3 { animation-delay: 0.3s; }
 .delay-4 { animation-delay: 0.4s; }
+
+/* ── Interactive agent cards ─────────────────────────────────────── */
+.agent-box { cursor: pointer; }
+
+.expand-hint {
+  display: block;
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.18);
+  margin-top: 0.3rem;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+}
+
+.agent-box:hover .expand-hint { color: rgba(255,255,255,0.55); }
+.agent-box.active .expand-hint { color: var(--accent-green); }
+
+.arch-info {
+  margin-top: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.arch-info.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.arch-info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 1.25rem;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.arch-info-icon { font-size: 1.4rem; flex-shrink: 0; }
+.arch-info-title { font-size: 0.88rem; font-weight: 700; color: var(--text-primary); }
+.arch-info-sub   { font-size: 0.75rem; color: var(--text-muted); }
+
+.arch-info-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.arch-io { padding: 1rem 1.25rem; }
+.arch-io + .arch-io { border-left: 1px solid var(--border-soft); }
+
+.arch-io-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 0.5rem;
+}
+
+.arch-io-val {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-family: var(--font-mono);
+}
+
+.arch-io-val strong { color: var(--text-primary); font-family: var(--font-base); }
+.arch-io-val em     { color: var(--accent-green); font-style: normal; font-weight: 700; }
+
+/* ── Cost Calculator ─────────────────────────────────────────────── */
+.calc-widget {
+  margin-top: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(59,130,246,0.05);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: var(--radius);
+}
+
+.calc-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.85rem;
+}
+
+.calc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.calc-prefix, .calc-suffix {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.calc-input {
+  width: 150px;
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-nav);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.calc-input:focus { border-color: var(--accent-blue); }
+
+.calc-results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.calc-stat {
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+}
+
+.calc-stat-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+  margin-bottom: 0.2rem;
+  font-family: var(--font-mono);
+}
+
+.calc-stat-key {
+  font-size: 0.71rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Silent Failure Demo ─────────────────────────────────────────── */
+#silent-failure {
+  background: linear-gradient(180deg, transparent 0%, rgba(27,42,74,0.3) 50%, transparent 100%);
+}
+
+.sf-context-wrap { text-align: center; margin: 1.25rem 0 1.75rem; }
+
+.sf-context {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  padding: 0.6rem 1.1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  display: inline-block;
+  line-height: 1.6;
+}
+
+.sf-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin: 0 auto 1.5rem;
+  max-width: 680px;
+}
+
+.sf-card {
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 2px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  text-align: center;
+  user-select: none;
+}
+
+.sf-card:hover:not(.correct):not(.wrong) {
+  transform: translateY(-4px);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+.sf-card .sf-event {
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.sf-card .sf-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.sf-card.correct {
+  border-color: var(--accent-green);
+  background: rgba(16,185,129,0.08);
+  cursor: default;
+}
+
+.sf-card.wrong {
+  border-color: #EF4444;
+  background: rgba(239,68,68,0.07);
+  cursor: default;
+  opacity: 0.75;
+}
+
+.sf-result {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  display: none;
+}
+
+.sf-result.show   { display: block; animation: fadeInUp 0.3s ease; }
+.sf-result.pass   { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); }
+.sf-result.fail   { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.3); }
+
+.sf-result-title  { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.4rem; }
+.sf-result.pass .sf-result-title { color: var(--accent-green); }
+.sf-result.fail .sf-result-title { color: #F87171; }
+.sf-result-body   { font-size: 0.83rem; color: var(--text-muted); line-height: 1.65; }
+
+.sf-reset {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--accent-blue);
+  cursor: pointer;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  display: block;
+}
+
+.sf-reset:hover { color: var(--text-primary); }
+
+/* ── Pipe-arrow sequential entrance ─────────────────────────────── */
+.pipe-arrow {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.pipe-arrow.lit { opacity: 1; }
 </style>
 </head>
 <body>
@@ -1133,6 +1388,7 @@ footer {
   <ul class="nav-links">
     <li><a href="#problem">Problem</a></li>
     <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#silent-failure">Demo</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#evaluation">Evaluation</a></li>
     <li><a href="#team">Team</a></li>
@@ -1229,6 +1485,27 @@ footer {
           a causal chain from the specific event that triggered the cost to the exact
           pricing dimension it hit.
         </div>
+
+        <!-- Cost Calculator -->
+        <div class="calc-widget">
+          <div class="calc-label">💸 Estimate your annual waste</div>
+          <div class="calc-row">
+            <span class="calc-prefix">$</span>
+            <input class="calc-input" id="monthly-spend" type="number" min="0" step="1000"
+                   placeholder="50000" aria-label="Monthly AWS spend in dollars">
+            <span class="calc-suffix">/ month AWS spend</span>
+          </div>
+          <div class="calc-results" id="calc-results" style="display:none;">
+            <div class="calc-stat">
+              <div class="calc-stat-val" id="annual-waste">—</div>
+              <div class="calc-stat-key">Estimated annual waste<br>(32% of total spend)</div>
+            </div>
+            <div class="calc-stat">
+              <div class="calc-stat-val" id="eng-hours">—</div>
+              <div class="calc-stat-key">Engineer-hours spent investigating / year<br>(3.5 hrs × avg anomalies)</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -1295,11 +1572,12 @@ footer {
         <div class="pipe-arrow"></div>
 
         <!-- Sentinel -->
-        <div class="agent-col">
+        <div class="agent-col" data-agent="sentinel">
           <div class="agent-box agent-sentinel">
             <span class="agent-icon">🛡️</span>
             <div class="agent-name">Sentinel</div>
             <div class="agent-sub">Anomaly Detection</div>
+            <span class="expand-hint">▼ click to explore</span>
           </div>
           <div class="agent-desc">Z-score on 14-day rolling window (z ≥ 2.5)</div>
         </div>
@@ -1307,11 +1585,12 @@ footer {
         <div class="pipe-arrow"></div>
 
         <!-- Detective -->
-        <div class="agent-col">
+        <div class="agent-col" data-agent="detective">
           <div class="agent-box agent-detective">
             <span class="agent-icon">🕵️</span>
             <div class="agent-name">Detective</div>
             <div class="agent-sub">Event Correlation</div>
+            <span class="expand-hint">▼ click to explore</span>
           </div>
           <div class="agent-desc">Scores CloudTrail events by temporal &amp; causal proximity</div>
         </div>
@@ -1319,11 +1598,12 @@ footer {
         <div class="pipe-arrow"></div>
 
         <!-- Analyst (with RAG branch) -->
-        <div class="agent-col" style="padding-bottom: 120px;">
+        <div class="agent-col" data-agent="analyst" style="padding-bottom: 120px;">
           <div class="agent-box agent-analyst">
             <span class="agent-icon">🔬</span>
             <div class="agent-name">Analyst</div>
             <div class="agent-sub">RAG Reasoning</div>
+            <span class="expand-hint">▼ click to explore</span>
           </div>
           <div class="agent-desc">Validates mechanism + cost math against pricing docs</div>
           <!-- RAG KB branch hanging below -->
@@ -1340,11 +1620,12 @@ footer {
         <div class="pipe-arrow"></div>
 
         <!-- Narrator -->
-        <div class="agent-col">
+        <div class="agent-col" data-agent="narrator">
           <div class="agent-box agent-narrator">
             <span class="agent-icon">📝</span>
             <div class="agent-name">Narrator</div>
             <div class="agent-sub">Report Generation</div>
+            <span class="expand-hint">▼ click to explore</span>
           </div>
           <div class="agent-desc">7-section cited markdown report with [INFERENCE] tagging</div>
         </div>
@@ -1363,6 +1644,91 @@ footer {
 
       </div>
     </div>
+
+    <!-- Agent detail bar — populated by JS on agent-box click -->
+    <div class="arch-info" id="arch-info" role="region" aria-live="polite">
+      <div class="arch-info-header">
+        <span class="arch-info-icon" id="ai-icon"></span>
+        <div>
+          <div class="arch-info-title" id="ai-title"></div>
+          <div class="arch-info-sub"  id="ai-sub"></div>
+        </div>
+      </div>
+      <div class="arch-info-body">
+        <div class="arch-io">
+          <div class="arch-io-label">Input</div>
+          <div class="arch-io-val" id="ai-input"></div>
+        </div>
+        <div class="arch-io">
+          <div class="arch-io-label">Output</div>
+          <div class="arch-io-val" id="ai-output"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Silent Failure Demo ───────────────────────────────────────── -->
+<section id="silent-failure">
+  <div class="container">
+    <div class="section-label">Interactive Demo</div>
+    <h2 class="section-title">Try the Silent Failure Test</h2>
+    <p class="section-sub">
+      A generic tool reports the CloudTrail event closest in time to an S3 cost spike.
+      But correlation isn't causation. Can you spot which event <em>actually</em> caused the spike?
+    </p>
+
+    <div class="sf-context-wrap">
+      <div class="sf-context">
+        S3 bill spiked <strong>+$1,840</strong> on 2024-01-18 &nbsp;·&nbsp;
+        Two events found in CloudTrail ±24 h of the spike &nbsp;·&nbsp;
+        Which one caused the cost increase?
+      </div>
+    </div>
+
+    <div class="sf-cards" id="sf-cards">
+      <div class="sf-card" data-choice="wrong" tabindex="0" role="button" aria-label="Choose PutBucketPolicy">
+        <div class="sf-event">PutBucketPolicy</div>
+        <div class="sf-desc">
+          Applied a new bucket policy restricting public read access.<br>
+          Logged 3 hours before the spike.
+        </div>
+      </div>
+      <div class="sf-card" data-choice="correct" tabindex="0" role="button" aria-label="Choose PutBucketLifecycleConfiguration">
+        <div class="sf-event">PutBucketLifecycleConfiguration</div>
+        <div class="sf-desc">
+          Removed all lifecycle rules that moved objects to S3-IA after 30 days.<br>
+          Logged 6 hours before the spike.
+        </div>
+      </div>
+    </div>
+
+    <div class="sf-result" id="sf-result-wrong" role="alert">
+      <div class="sf-result-title">✗ Not quite — that's a silent failure</div>
+      <div class="sf-result-body">
+        <strong>PutBucketPolicy</strong> changes who can <em>access</em> a bucket — it controls IAM permissions,
+        not storage pricing. It cannot cause a cost spike. A naive system flags it because it's the nearest
+        event in time, but CostSherlock rules it out as <code style="font-family:var(--font-mono);color:var(--accent-amber)">WRONG_MECHANISM</code> —
+        access policies have no effect on S3-Standard storage pricing.
+      </div>
+      <button class="sf-reset" id="sf-reset">↩ Try again</button>
+    </div>
+
+    <div class="sf-result" id="sf-result-correct" role="alert">
+      <div class="sf-result-title">✓ Correct — that's the real cause</div>
+      <div class="sf-result-body">
+        <strong>PutBucketLifecycleConfiguration</strong> deleted the rule that was automatically moving
+        objects to the cheaper S3-IA tier after 30 days. With the rule gone, all objects stayed in
+        S3-Standard — the more expensive tier — and the bill reflected the difference.
+        CostSherlock's Analyst validates this with unit math:
+        <code style="font-family:var(--font-mono);color:var(--accent-green)">450 GB × ($0.023 − $0.0125) / GB = $4.73/day ≈ $1,840/month</code>.
+      </div>
+      <button class="sf-reset" id="sf-reset-2">↩ Reset</button>
+    </div>
+
   </div>
 </section>
 
@@ -1753,16 +2119,16 @@ footer {
   </div>
 </footer>
 
-<!-- ── JS: Intersection observer for scroll animations ───────────── -->
+<!-- ── JS ─────────────────────────────────────────────────────────── -->
 <script>
 (function () {
   'use strict';
 
-  // Smooth active-nav highlighting
+  /* ── 1. Active-nav highlighting ─────────────────────────────────── */
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-links a');
 
-  const observer = new IntersectionObserver((entries) => {
+  const navObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const id = entry.target.id;
@@ -1775,11 +2141,11 @@ footer {
     });
   }, { threshold: 0.35 });
 
-  sections.forEach(s => observer.observe(s));
+  sections.forEach(s => navObserver.observe(s));
 
-  // Fade-in on scroll for feature cards and other elements
+  /* ── 2. Scroll fade-in ──────────────────────────────────────────── */
   const fadeTargets = document.querySelectorAll(
-    '.feature-card, .view-card, .team-card, .vs-item, .agent-col, .tech-pill, .eval-table tbody tr'
+    '.feature-card, .view-card, .team-card, .vs-item, .agent-col, .tech-pill, .eval-table tbody tr, .sf-card, .gemini-side'
   );
 
   const fadeObserver = new IntersectionObserver((entries) => {
@@ -1790,22 +2156,229 @@ footer {
         fadeObserver.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.12 });
+  }, { threshold: 0.1 });
 
   fadeTargets.forEach((el, i) => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(20px)';
-    el.style.transition = `opacity 0.5s ease ${(i % 6) * 0.07}s, transform 0.5s ease ${(i % 6) * 0.07}s`;
+    el.style.transition = `opacity 0.5s ease ${(i % 8) * 0.06}s, transform 0.5s ease ${(i % 8) * 0.06}s`;
     fadeObserver.observe(el);
   });
 
-  // Nav shadow on scroll
+  /* ── 3. Nav shadow on scroll ────────────────────────────────────── */
   const nav = document.querySelector('nav');
   window.addEventListener('scroll', () => {
-    nav.style.boxShadow = window.scrollY > 10
-      ? '0 4px 24px rgba(0,0,0,0.4)'
-      : '';
+    nav.style.boxShadow = window.scrollY > 10 ? '0 4px 24px rgba(0,0,0,0.4)' : '';
   }, { passive: true });
+
+  /* ── 4. Number counter animation ────────────────────────────────── */
+  function formatNum(val, isPercent, isMoney) {
+    if (isMoney) return '$' + val.toFixed(1) + 'M';
+    if (isPercent) return val.toFixed(0) + '%';
+    return val % 1 === 0 ? String(Math.round(val)) : val.toFixed(1);
+  }
+
+  function animateCounter(el) {
+    const raw = el.textContent.trim();
+    const isMoney   = raw.startsWith('$') && raw.endsWith('M');
+    const isPercent = raw.endsWith('%');
+    const num = parseFloat(raw.replace(/[$M%+]/g, ''));
+    if (isNaN(num)) return;
+
+    const duration = 1200;
+    const start = performance.now();
+
+    function tick(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      el.textContent = formatNum(num * ease, isPercent, isMoney);
+      if (t < 1) requestAnimationFrame(tick);
+      else el.textContent = raw; // ensure exact final value
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        counterObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.problem-stat, .stat-badge .val, .result-val').forEach(el => {
+    counterObserver.observe(el);
+  });
+
+  /* ── 5. Sequential pipeline arrow animation ─────────────────────── */
+  const archSection = document.getElementById('architecture');
+  const pipeArrows  = document.querySelectorAll('.pipe-arrow');
+  let arrowsAnimated = false;
+
+  const archObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !arrowsAnimated) {
+        arrowsAnimated = true;
+        pipeArrows.forEach((arrow, i) => {
+          setTimeout(() => arrow.classList.add('lit'), 300 + i * 180);
+        });
+        archObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  if (archSection) archObserver.observe(archSection);
+
+  /* ── 6. Agent card click — live architecture demo ───────────────── */
+  const AGENT_DATA = {
+    sentinel: {
+      icon: '🛡️',
+      title: 'Sentinel — Anomaly Detection',
+      sub: 'Runs a z-score test on a 14-day rolling baseline for every AWS service',
+      input: '45 days of Cost Explorer JSON\n3 services: EC2, S3, CloudWatch\n~1,350 daily cost data-points',
+      output: '<em>3 anomalies detected</em> (z ≥ 2.5)\nEC2 2024-01-15 · z = 4.71 · <strong>Critical</strong>\nS3  2024-01-18 · z = 3.82 · Warning\nCW  2024-01-20 · z = 2.63 · Info',
+    },
+    detective: {
+      icon: '🕵️',
+      title: 'Detective — Event Correlation',
+      sub: 'Queries CloudTrail logs and scores each mutating event for causal relevance',
+      input: 'Anomaly: EC2 spike on 2024-01-15\nLookback window: ±48 hours\nCloudTrail event whitelist: 10 mutating types',
+      output: '<em>12 events scored</em> in window\n<strong>Top hit:</strong> RunInstances · proximity 0.94\nRanked candidates passed to Analyst',
+    },
+    analyst: {
+      icon: '🔬',
+      title: 'Analyst — RAG Causal Reasoning',
+      sub: 'Retrieves pricing docs via ChromaDB and validates each hypothesis with cost math',
+      input: 'Top event: RunInstances (r5.4xlarge, ×16)\n8 RAG docs retrieved from ChromaDB\nAnthropics Claude Sonnet for reasoning',
+      output: '<em>3 hypotheses ranked</em>\n#1 compute_overprovisioning · confidence 0.91\nMath: 16 × $1.008/hr × 112 h = <strong>$1,806</strong>\nPutBucketPolicy ruled out: WRONG_MECHANISM',
+    },
+    narrator: {
+      icon: '📝',
+      title: 'Narrator — Cited Report Generation',
+      sub: 'Renders a 7-section markdown report — every factual claim carries an inline citation',
+      input: '3 ranked hypotheses + evidence lists\nRuled-out events with reason codes\nRemediations from Analyst',
+      output: '<em>7-section report generated</em>\nCitation ratio: <strong>93.3%</strong> (faithfulness PASS)\nAll claims tagged: [CloudTrail: …] or [INFERENCE]',
+    },
+  };
+
+  const archInfo   = document.getElementById('arch-info');
+  const aiIcon     = document.getElementById('ai-icon');
+  const aiTitle    = document.getElementById('ai-title');
+  const aiSub      = document.getElementById('ai-sub');
+  const aiInput    = document.getElementById('ai-input');
+  const aiOutput   = document.getElementById('ai-output');
+
+  let activeAgentCol = null;
+
+  function showAgentPanel(agentKey, col) {
+    const d = AGENT_DATA[agentKey];
+    if (!d) return;
+
+    // Deactivate previous
+    if (activeAgentCol && activeAgentCol !== col) {
+      activeAgentCol.querySelector('.agent-box').classList.remove('active');
+    }
+
+    const box = col.querySelector('.agent-box');
+    const isToggle = activeAgentCol === col && archInfo.classList.contains('visible');
+
+    if (isToggle) {
+      archInfo.classList.remove('visible');
+      box.classList.remove('active');
+      activeAgentCol = null;
+      return;
+    }
+
+    activeAgentCol = col;
+    box.classList.add('active');
+
+    aiIcon.textContent   = d.icon;
+    aiTitle.textContent  = d.title;
+    aiSub.textContent    = d.sub;
+    aiInput.innerHTML    = d.input.replace(/\n/g, '<br>');
+    aiOutput.innerHTML   = d.output.replace(/\n/g, '<br>');
+
+    archInfo.classList.add('visible');
+    archInfo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  document.querySelectorAll('.agent-col[data-agent]').forEach(col => {
+    const key = col.dataset.agent;
+    col.querySelector('.agent-box').addEventListener('click', () => showAgentPanel(key, col));
+    col.querySelector('.agent-box').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showAgentPanel(key, col); }
+    });
+    col.querySelector('.agent-box').setAttribute('tabindex', '0');
+    col.querySelector('.agent-box').setAttribute('role', 'button');
+    col.querySelector('.agent-box').setAttribute('aria-expanded', 'false');
+  });
+
+  /* ── 7. Silent failure quiz ─────────────────────────────────────── */
+  const sfCards       = document.querySelectorAll('.sf-card');
+  const sfResultWrong = document.getElementById('sf-result-wrong');
+  const sfResultRight = document.getElementById('sf-result-correct');
+
+  function sfReset() {
+    sfCards.forEach(c => { c.classList.remove('correct', 'wrong'); });
+    sfResultWrong.classList.remove('show', 'fail');
+    sfResultRight.classList.remove('show', 'pass');
+    sfResultWrong.style.display = '';
+    sfResultRight.style.display = '';
+  }
+
+  sfCards.forEach(card => {
+    function choose() {
+      // Already answered?
+      if ([...sfCards].some(c => c.classList.contains('correct') || c.classList.contains('wrong'))) return;
+      const choice = card.dataset.choice;
+      if (choice === 'correct') {
+        card.classList.add('correct');
+        sfCards.forEach(c => { if (c !== card) c.classList.add('wrong'); });
+        sfResultRight.classList.add('show', 'pass');
+        sfResultRight.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        card.classList.add('wrong');
+        sfCards.forEach(c => { if (c !== card) c.classList.add('correct'); });
+        sfResultWrong.classList.add('show', 'fail');
+        sfResultWrong.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+    card.addEventListener('click', choose);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+  });
+
+  document.getElementById('sf-reset').addEventListener('click', sfReset);
+  document.getElementById('sf-reset-2').addEventListener('click', sfReset);
+
+  /* ── 8. Cost calculator ─────────────────────────────────────────── */
+  const spendInput   = document.getElementById('monthly-spend');
+  const calcResults  = document.getElementById('calc-results');
+  const annualWasteEl = document.getElementById('annual-waste');
+  const engHoursEl   = document.getElementById('eng-hours');
+
+  function fmtDollar(n) {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+    return '$' + Math.round(n);
+  }
+
+  spendInput.addEventListener('input', () => {
+    const monthly = parseFloat(spendInput.value);
+    if (!monthly || monthly <= 0) {
+      calcResults.style.display = 'none';
+      return;
+    }
+    const annualWaste  = monthly * 12 * 0.32;          // FinOps 32% waste figure
+    const anomaliesYr  = Math.max(1, Math.round(monthly / 25000) * 12); // ~1 spike per $25K/mo
+    const hoursYr      = anomaliesYr * 3.5;            // 3.5 hrs manual investigation saved each
+
+    annualWasteEl.textContent = fmtDollar(annualWaste);
+    engHoursEl.textContent    = Math.round(hoursYr) + ' hrs';
+
+    calcResults.style.display = '';
+  });
+
 })();
 </script>
 
