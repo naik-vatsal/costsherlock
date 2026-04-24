@@ -56,6 +56,20 @@ st.set_page_config(
 )
 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
+# Theme variables:
+#   NAVY (#0F1E38)  — primary background, header bar, sidebar base
+#   BLUE (#2563EB)  — accent borders, interactive element highlights
+#   Text hierarchy: #FFFFFF (primary) → #CBD5E1 (secondary) → #94A3B8 (muted)
+#
+# Responsive breakpoints are handled by Streamlit's built-in column system.
+# Custom CSS targets Streamlit's internal data-testid selectors; these are
+# stable across Streamlit 1.x but may need review on major version upgrades.
+#
+# Color palette reference (Tailwind-aligned):
+#   Success green : #059669  (Emerald-600)
+#   Warning amber : #D97706  (Amber-600)
+#   Error red     : #DC2626  (Red-600)
+#   Link blue     : #93C5FD  (Blue-300)
 st.markdown(
     f"""
     <style>
