@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CostSherlock — An agentic system for causal attribution of AWS cost anomalies. Multi-agent AI pipeline that investigates why your AWS bill spiked.">
+<title>CostSherlock — Agentic AWS Cost Investigation</title>
+<style>
+/* ── Custom properties ───────────────────────────────────────────── */
+:root {
+  --bg-deep:      #0A1628;
+  --bg-navy:      #0F1E38;
+  --bg-card:      #1B2A4A;
+  --bg-card-alt:  #162040;
+  --accent-blue:  #3B82F6;
+  --accent-cyan:  #06B6D4;
+  --accent-green: #10B981;
+  --accent-amber: #F59E0B;
+  --accent-purple:#8B5CF6;
+  --text-primary: #F1F5F9;
+  --text-muted:   #94A3B8;
+  --text-faint:   #64748B;
+  --border:       rgba(59,130,246,0.18);
+  --border-soft:  rgba(255,255,255,0.06);
+  --glow:         rgba(59,130,246,0.15);
+  --radius:       12px;
+  --radius-lg:    20px;
+  --shadow:       0 4px 24px rgba(0,0,0,0.4);
+  --shadow-lg:    0 12px 48px rgba(0,0,0,0.6);
+  --font:         -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* ── Reset & base ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Selection ───────────────────────────────────────────────────── */
+::selection { background: rgba(59,130,246,0.35); color: #fff; }
+
+/* ── Background mesh ─────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(59,130,246,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139,92,246,0.06) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-navy) 0%, var(--bg-deep) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Nav ─────────────────────────────────────────────────────────── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(1rem, 5vw, 3rem);
+  height: 60px;
+  background: rgba(10,22,40,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.nav-brand {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0;
+  list-style: none;
+}
+
+.nav-links a {
+  display: block;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  letter-spacing: 0.01em;
+}
+
+.nav-links a:hover { color: var(--text-primary); background: var(--border-soft); }
+
+.nav-cta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 1rem !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--accent-cyan) !important;
+}
+
+.nav-cta:hover { background: rgba(59,130,246,0.1) !important; }
+
+/* ── Layout helpers ──────────────────────────────────────────────── */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 3rem);
+}
+
+section {
+  padding: clamp(4rem, 8vw, 7rem) 0;
+}
+
+.section-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin-bottom: 1rem;
+  padding: 0.3rem 0.75rem;
+  background: rgba(6,182,212,0.1);
+  border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 100px;
+}
+
+h2.section-title {
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+.section-sub {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 640px;
+  margin-bottom: 3.5rem;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────── */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-top: 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+  padding: 4rem 0;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  padding: 0.35rem 0.85rem;
+  background: rgba(6,182,212,0.08);
+  border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 100px;
+  margin-bottom: 1.75rem;
+}
+
+.hero-eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-cyan); display: inline-block; animation: pulse 2s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+h1.hero-title {
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin-bottom: 1.5rem;
+}
+
+.hero-title .emoji { font-size: 0.9em; }
+
+.hero-title .gradient-text {
+  background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-description {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  color: var(--text-muted);
+  max-width: 600px;
+  margin-bottom: 2.5rem;
+  line-height: 1.75;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.75rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-blue), #2563EB);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59,130,246,0.45);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border-soft);
+  transform: translateY(-2px);
+  border-color: rgba(59,130,246,0.4);
+}
+
+.hero-team {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}
+
+.team-avatars {
+  display: flex;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: -8px;
+}
+
+.avatar:first-child { margin-left: 0; }
+.avatar-vn { background: linear-gradient(135deg, #3B82F6, #8B5CF6); }
+.avatar-pg { background: linear-gradient(135deg, #06B6D4, #10B981); }
+
+.hero-team .sep { color: var(--border); }
+
+/* Hero stats row */
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.stat-badge .val { color: var(--text-primary); font-weight: 700; }
+.stat-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+.dot-green { background: var(--accent-green); }
+.dot-blue  { background: var(--accent-blue); }
+.dot-amber { background: var(--accent-amber); }
+
+/* Floating cards decoration */
+.hero-deco {
+  display: none;
+}
+
+/* ── Section: Problem ────────────────────────────────────────────── */
+#problem {
+  background: linear-gradient(180deg, transparent 0%, rgba(27,42,74,0.4) 50%, transparent 100%);
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.problem-stat {
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--accent-amber), #F97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.problem-text {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.problem-highlight {
+  margin-top: 2rem;
+  padding: 1.5rem 1.75rem;
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.06));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.problem-highlight strong {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.vs-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.vs-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+}
+
+.vs-item.bad  { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.15); }
+.vs-item.good { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2); }
+
+.vs-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.vs-item.bad  .vs-icon { background: rgba(239,68,68,0.15); }
+.vs-item.good .vs-icon { background: rgba(16,185,129,0.15); }
+
+.vs-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.25rem; }
+.vs-item.bad  .vs-label { color: #F87171; }
+.vs-item.good .vs-label { color: var(--accent-green); }
+.vs-body { font-size: 0.9rem; color: var(--text-muted); }
+
+/* ── Section: Architecture ───────────────────────────────────────── */
+#architecture {
+  position: relative;
+}
+
+.pipeline-wrapper {
+  margin-top: 3rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.pipeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 720px;
+  position: relative;
+}
+
+.pipeline-input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.data-box {
+  width: 110px;
+  padding: 0.85rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.data-box .data-icon { font-size: 1.4rem; display: block; margin-bottom: 0.35rem; }
+.data-box .data-name { font-size: 0.72rem; font-weight: 600; color: var(--text-primary); }
+
+.pipe-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 0.25rem;
+  flex-shrink: 0;
+  margin-top: 38px;
+}
+
+.pipe-arrow::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--border), rgba(59,130,246,0.5));
+}
+
+.pipe-arrow::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid rgba(59,130,246,0.5);
+  margin-left: -1px;
+}
+
+.agent-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.agent-box {
+  width: 138px;
+  padding: 1rem 0.85rem;
+  border-radius: var(--radius);
+  border: 1px solid;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.agent-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.agent-box .agent-icon { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; }
+.agent-box .agent-name { font-size: 0.82rem; font-weight: 700; margin-bottom: 0.2rem; }
+.agent-box .agent-sub  { font-size: 0.67rem; color: var(--text-faint); line-height: 1.4; }
+
+.agent-sentinel  { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.3); }
+.agent-sentinel  .agent-name { color: #60A5FA; }
+
+.agent-detective { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); }
+.agent-detective .agent-name { color: #FCD34D; }
+
+.agent-analyst   { background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.3); }
+.agent-analyst   .agent-name { color: #C4B5FD; }
+
+.agent-narrator  { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3); }
+.agent-narrator  .agent-name { color: #6EE7B7; }
+
+.agent-dashboard { background: rgba(6,182,212,0.08); border-color: rgba(6,182,212,0.3); }
+.agent-dashboard .agent-name { color: #67E8F9; }
+
+.rag-branch {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  pointer-events: none;
+}
+
+.rag-line {
+  width: 2px;
+  height: 22px;
+  background: linear-gradient(180deg, rgba(139,92,246,0.5), rgba(139,92,246,0.2));
+}
+
+.rag-box {
+  width: 124px;
+  padding: 0.75rem 0.7rem;
+  background: rgba(139,92,246,0.06);
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.rag-box .rag-icon { font-size: 1.1rem; display: block; margin-bottom: 0.25rem; }
+.rag-box .rag-name { font-size: 0.7rem; font-weight: 700; color: #C4B5FD; margin-bottom: 0.15rem; }
+.rag-box .rag-sub  { font-size: 0.63rem; color: var(--text-faint); line-height: 1.3; }
+
+.agent-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 130px;
+  line-height: 1.45;
+  margin-top: 0.25rem;
+}
+
+/* ── Section: Features ───────────────────────────────────────────── */
+#features {
+  background: linear-gradient(180deg, transparent 0%, rgba(27,42,74,0.3) 50%, transparent 100%);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.feature-card {
+  padding: 1.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--card-accent, var(--accent-blue));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  background: var(--icon-bg, rgba(59,130,246,0.12));
+}
+
+.feature-card h3 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.feature-card p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* ── Section: Dashboard ──────────────────────────────────────────── */
+#dashboard {
+  position: relative;
+}
+
+.views-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.view-card {
+  padding: 1.4rem 1.5rem;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: border-color 0.2s;
+}
+
+.view-card:hover { border-color: var(--border); }
+
+.view-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(59,130,246,0.15);
+  color: var(--accent-blue);
+  font-size: 0.78rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.view-card h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--text-primary); }
+.view-card p  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.55; }
+
+.screenshots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.screenshot-frame {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #1a1a2e;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.85rem;
+  background: #111827;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.frame-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.fd-red    { background: #FF5F57; }
+.fd-yellow { background: #FEBC2E; }
+.fd-green  { background: #28C840; }
+
+.frame-title {
+  font-size: 0.67rem;
+  color: var(--text-faint);
+  margin-left: 0.3rem;
+  font-family: var(--font-mono);
+}
+
+.frame-content {
+  aspect-ratio: 16/10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #0d1b33 0%, #1a2744 100%);
+}
+
+.frame-placeholder {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  text-align: center;
+  font-family: var(--font-mono);
+  padding: 0.5rem 1rem;
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 6px;
+}
+
+.frame-icon { font-size: 1.8rem; }
+
+.demo-note {
+  padding: 1.25rem 1.5rem;
+  background: rgba(59,130,246,0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.demo-note code {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--accent-cyan);
+  background: rgba(6,182,212,0.08);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* ── Section: Evaluation ─────────────────────────────────────────── */
+#evaluation {
+  background: linear-gradient(180deg, transparent 0%, rgba(27,42,74,0.35) 60%, transparent 100%);
+}
+
+.eval-table-wrap {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  margin-top: 2.5rem;
+}
+
+.eval-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.eval-table thead tr {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.eval-table th {
+  padding: 0.9rem 1.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: left;
+}
+
+.eval-table td {
+  padding: 1rem 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.eval-table tbody tr:last-child td { border-bottom: none; }
+
+.eval-table tbody tr {
+  background: var(--bg-card-alt);
+  transition: background 0.15s;
+}
+
+.eval-table tbody tr:hover { background: rgba(59,130,246,0.04); }
+
+.eval-table tbody tr:nth-child(even) { background: var(--bg-card); }
+.eval-table tbody tr:nth-child(even):hover { background: rgba(59,130,246,0.05); }
+
+.metric-name { color: var(--text-primary) !important; font-weight: 600; }
+
+.result-val {
+  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+
+.result-pass  { color: var(--accent-green); }
+.result-warn  { color: var(--accent-amber); }
+.result-pend  { color: var(--text-faint); font-style: italic; font-size: 0.82rem !important; font-weight: 400 !important; }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 100px;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.badge-pass   { background: rgba(16,185,129,0.12); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.25); }
+.badge-manual { background: rgba(100,116,139,0.1);  color: var(--text-faint);   border: 1px solid rgba(100,116,139,0.2); }
+
+.eval-note {
+  margin-top: 1.25rem;
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Section: Tech stack ─────────────────────────────────────────── */
+#tech {
+  padding-top: 3rem;
+  padding-bottom: 5rem;
+}
+
+.tech-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+}
+
+.tech-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.tech-pill:hover { border-color: var(--border); transform: translateY(-2px); }
+
+.pill-icon { font-size: 1.1rem; }
+
+/* ── Section: Gemini test ────────────────────────────────────────── */
+#gemini {
+  background: linear-gradient(180deg, transparent 0%, rgba(27,42,74,0.3) 50%, transparent 100%);
+}
+
+.gemini-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2.5rem;
+}
+
+.gemini-side {
+  padding: 1.75rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid;
+}
+
+.gemini-llm  { background: rgba(239,68,68,0.04); border-color: rgba(239,68,68,0.18); }
+.gemini-cs   { background: rgba(16,185,129,0.04); border-color: rgba(16,185,129,0.2); }
+
+.gemini-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 100px;
+  display: inline-block;
+}
+
+.gemini-llm  .gemini-label { color: #F87171; background: rgba(239,68,68,0.12); }
+.gemini-cs   .gemini-label { color: var(--accent-green); background: rgba(16,185,129,0.12); }
+
+.gemini-side h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  color: var(--text-primary);
+}
+
+.gemini-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gemini-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.li-icon { flex-shrink: 0; margin-top: 1px; font-size: 0.85rem; }
+
+.differentiator-box {
+  margin-top: 2rem;
+  padding: 1.5rem 1.75rem;
+  background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.06));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.differentiator-box p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.differentiator-box strong { color: var(--accent-cyan); }
+
+/* ── Section: Team ───────────────────────────────────────────────── */
+#team {
+  padding-bottom: 5rem;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.team-card {
+  padding: 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.team-card:hover { transform: translateY(-4px); border-color: var(--border); }
+
+.team-avatar-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 auto 1.25rem;
+  color: #fff;
+  border: 3px solid var(--border-soft);
+}
+
+.ta-vn { background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%); }
+.ta-pg { background: linear-gradient(135deg, #06B6D4 0%, #10B981 100%); }
+
+.team-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
+
+.team-card .role {
+  font-size: 0.78rem;
+  color: var(--accent-cyan);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-bottom: 1rem;
+}
+
+.team-card .bio {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.team-contributions {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.contrib-tag {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-soft);
+  border-radius: 100px;
+  color: var(--text-faint);
+}
+
+.uni-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-soft);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 auto;
+  margin-top: 2.5rem;
+  display: table;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--border-soft);
+  padding: 2.5rem 0;
+  text-align: center;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: var(--accent-cyan); }
+
+.footer-copy {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  line-height: 1.8;
+}
+
+.footer-copy a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.footer-copy a:hover { color: var(--text-primary); }
+
+/* ── Utilities ───────────────────────────────────────────────────── */
+.text-center { text-align: center; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: 0;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+
+  .problem-grid  { grid-template-columns: 1fr; }
+  .gemini-grid   { grid-template-columns: 1fr; }
+  .screenshots-grid { grid-template-columns: 1fr; }
+
+  .pipeline { min-width: 600px; }
+
+  .eval-table th:nth-child(2),
+  .eval-table td:nth-child(2) { display: none; }
+}
+
+@media (max-width: 480px) {
+  .hero-actions { flex-direction: column; }
+  .btn { justify-content: center; }
+}
+
+/* ── Animations ──────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeInUp 0.6s ease both; }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+</style>
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-brand" href="#hero">🔍 CostSherlock</a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#evaluation">Evaluation</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="https://github.com/naik-vatsal/costsherlock" target="_blank" rel="noopener" class="nav-cta">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-eyebrow fade-in">
+          <span></span> Generative AI · Multi-Agent System
+        </div>
+
+        <h1 class="hero-title fade-in delay-1">
+          <span class="emoji">🔍</span> Cost<span class="gradient-text">Sherlock</span>
+        </h1>
+
+        <p class="hero-description fade-in delay-2">
+          An agentic AI system that investigates your AWS cost anomalies and explains exactly
+          <em>why</em> your bill spiked — tracing every dollar to a specific CloudTrail event,
+          grounded in AWS pricing documentation, with citations in every report.
+        </p>
+
+        <div class="hero-actions fade-in delay-3">
+          <a href="https://github.com/naik-vatsal/costsherlock" target="_blank" rel="noopener" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            View on GitHub
+          </a>
+          <a href="https://github.com/naik-vatsal/costsherlock#readme" target="_blank" rel="noopener" class="btn btn-secondary">
+            Read Documentation
+          </a>
+        </div>
+
+        <div class="hero-team fade-in delay-4">
+          <div class="team-avatars">
+            <div class="avatar avatar-vn">VN</div>
+            <div class="avatar avatar-pg">PG</div>
+          </div>
+          <span>Vatsal Naik &amp; Priti Ghosh</span>
+          <span class="sep">·</span>
+          <span>Northeastern University</span>
+          <span class="sep">·</span>
+          <span>INFO 7375</span>
+        </div>
+
+        <div class="hero-stats fade-in delay-4">
+          <div class="stat-badge">
+            <span class="dot dot-green"></span>
+            <span class="val">4</span> AI Agents
+          </div>
+          <div class="stat-badge">
+            <span class="dot dot-blue"></span>
+            <span class="val">50+</span> RAG Documents
+          </div>
+          <div class="stat-badge">
+            <span class="dot dot-amber"></span>
+            <span class="val">100%</span> Causal Accuracy
+          </div>
+          <div class="stat-badge">
+            <span class="dot dot-green"></span>
+            <span class="val">59</span> Tests Passing
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Problem ──────────────────────────────────────────────────── -->
+<section id="problem">
+  <div class="container">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title">The $3.2&nbsp;Million Problem</h2>
+
+    <div class="problem-grid">
+      <div>
+        <div class="problem-stat">$3.2M</div>
+        <p class="problem-text">
+          The average enterprise wastes over $3.2 million per year on unnecessary cloud spend,
+          according to the FinOps Foundation. Cloud providers report that <strong>49% of organizations
+          consistently overspend</strong> their cloud budgets, with 32% of total cloud spend
+          classified as direct waste — idle resources, over-provisioned instances, and misconfigured
+          services that nobody noticed until the bill arrived.
+        </p>
+
+        <div class="problem-highlight">
+          <strong>AWS tells you THAT costs spiked.</strong><br>
+          CostSherlock tells you <strong>WHY</strong> — with evidence, citations, and
+          a causal chain from the specific event that triggered the cost to the exact
+          pricing dimension it hit.
+        </div>
+      </div>
+
+      <div>
+        <div class="vs-row">
+          <div class="vs-item bad">
+            <div class="vs-icon">❌</div>
+            <div>
+              <div class="vs-label">Without CostSherlock</div>
+              <div class="vs-body">An engineer spends 3–4 hours manually correlating Cost Explorer data with CloudTrail logs, guessing at root causes with no systematic evidence chain.</div>
+            </div>
+          </div>
+
+          <div class="vs-item good">
+            <div class="vs-icon">✅</div>
+            <div>
+              <div class="vs-label">With CostSherlock</div>
+              <div class="vs-body">A four-agent pipeline automatically detects anomalies, correlates CloudTrail events, validates causal mechanisms quantitatively, and produces a cited report in under 60 seconds.</div>
+            </div>
+          </div>
+
+          <div class="vs-item bad">
+            <div class="vs-icon">⚠️</div>
+            <div>
+              <div class="vs-label">The Silent Failure Problem</div>
+              <div class="vs-body">Generic tools blame the nearest event in time — even when it can't possibly be the cause. CostSherlock catches these correlation-without-causation errors automatically.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Architecture ──────────────────────────────────────────────── -->
+<section id="architecture">
+  <div class="container">
+    <div class="section-label">Architecture</div>
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">
+      Four specialized AI agents work in sequence, each with a single responsibility.
+      No agent does more than its job. No shortcuts between steps.
+    </p>
+
+    <div class="pipeline-wrapper">
+      <div class="pipeline">
+
+        <!-- Input data -->
+        <div class="pipeline-input">
+          <div class="data-box">
+            <span class="data-icon">📊</span>
+            <span class="data-name">Cost Explorer</span>
+            <div style="font-size:0.65rem;color:var(--text-faint);margin-top:0.25rem;">JSON export</div>
+          </div>
+          <div style="height:12px;width:2px;background:var(--border-soft);margin:0 auto;"></div>
+          <div class="data-box">
+            <span class="data-icon">📋</span>
+            <span class="data-name">CloudTrail</span>
+            <div style="font-size:0.65rem;color:var(--text-faint);margin-top:0.25rem;">event logs</div>
+          </div>
+        </div>
+
+        <div class="pipe-arrow"></div>
+
+        <!-- Sentinel -->
+        <div class="agent-col">
+          <div class="agent-box agent-sentinel">
+            <span class="agent-icon">🛡️</span>
+            <div class="agent-name">Sentinel</div>
+            <div class="agent-sub">Anomaly Detection</div>
+          </div>
+          <div class="agent-desc">Z-score on 14-day rolling window (z ≥ 2.5)</div>
+        </div>
+
+        <div class="pipe-arrow"></div>
+
+        <!-- Detective -->
+        <div class="agent-col">
+          <div class="agent-box agent-detective">
+            <span class="agent-icon">🕵️</span>
+            <div class="agent-name">Detective</div>
+            <div class="agent-sub">Event Correlation</div>
+          </div>
+          <div class="agent-desc">Scores CloudTrail events by temporal &amp; causal proximity</div>
+        </div>
+
+        <div class="pipe-arrow"></div>
+
+        <!-- Analyst (with RAG branch) -->
+        <div class="agent-col" style="padding-bottom: 120px;">
+          <div class="agent-box agent-analyst">
+            <span class="agent-icon">🔬</span>
+            <div class="agent-name">Analyst</div>
+            <div class="agent-sub">RAG Reasoning</div>
+          </div>
+          <div class="agent-desc">Validates mechanism + cost math against pricing docs</div>
+          <!-- RAG KB branch hanging below -->
+          <div class="rag-branch">
+            <div class="rag-line"></div>
+            <div class="rag-box">
+              <span class="rag-icon">📚</span>
+              <div class="rag-name">RAG Knowledge Base</div>
+              <div class="rag-sub">50 AWS pricing docs · ChromaDB · MiniLM embeddings</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pipe-arrow"></div>
+
+        <!-- Narrator -->
+        <div class="agent-col">
+          <div class="agent-box agent-narrator">
+            <span class="agent-icon">📝</span>
+            <div class="agent-name">Narrator</div>
+            <div class="agent-sub">Report Generation</div>
+          </div>
+          <div class="agent-desc">7-section cited markdown report with [INFERENCE] tagging</div>
+        </div>
+
+        <div class="pipe-arrow"></div>
+
+        <!-- Dashboard -->
+        <div class="agent-col">
+          <div class="agent-box agent-dashboard">
+            <span class="agent-icon">🖥️</span>
+            <div class="agent-name">Dashboard</div>
+            <div class="agent-sub">5-View UI</div>
+          </div>
+          <div class="agent-desc">Timeline · Investigation · Evidence · Compare · Feedback</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Features ──────────────────────────────────────────────────── -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">Key Features</div>
+    <h2 class="section-title">Built for Rigor,<br>Not Just Speed</h2>
+    <p class="section-sub">
+      Every design decision prioritizes evidence quality and causal correctness over fast, hand-wavy answers.
+    </p>
+
+    <div class="features-grid">
+
+      <div class="feature-card" style="--card-accent: #3B82F6; --icon-bg: rgba(59,130,246,0.12);">
+        <div class="feature-icon">🤖</div>
+        <h3>Multi-Agent Investigation</h3>
+        <p>Four specialized AI agents — Sentinel, Detective, Analyst, Narrator — each with a single responsibility, chained in sequence. No agent skips a step or does another's job.</p>
+      </div>
+
+      <div class="feature-card" style="--card-accent: #8B5CF6; --icon-bg: rgba(139,92,246,0.12);">
+        <div class="feature-icon">📚</div>
+        <h3>RAG-Powered Reasoning</h3>
+        <p>50+ curated AWS pricing and troubleshooting documents stored in ChromaDB with local MiniLM embeddings. Every hypothesis is grounded in retrieved pricing evidence — zero hallucinated costs.</p>
+      </div>
+
+      <div class="feature-card" style="--card-accent: #F59E0B; --icon-bg: rgba(245,158,11,0.12);">
+        <div class="feature-icon">🎯</div>
+        <h3>Silent Failure Detection</h3>
+        <p>Catches correlation-without-causation errors automatically. A <code style="font-family:var(--font-mono);font-size:0.8em;color:var(--accent-amber)">PutBucketPolicy</code> event near an S3 cost spike? Ruled out as <strong>WRONG_MECHANISM</strong> — it changes access permissions, not storage pricing.</p>
+      </div>
+
+      <div class="feature-card" style="--card-accent: #06B6D4; --icon-bg: rgba(6,182,212,0.12);">
+        <div class="feature-icon">🖥️</div>
+        <h3>Interactive Dashboard</h3>
+        <p>5-view Streamlit interface: Timeline with anomaly severity table, Investigation report viewer with Previous/Next navigation, Evidence Explorer, cross-anomaly Compare charts, and a Feedback loop.</p>
+      </div>
+
+      <div class="feature-card" style="--card-accent: #10B981; --icon-bg: rgba(16,185,129,0.12);">
+        <div class="feature-icon">📎</div>
+        <h3>Evidence-Grounded Reports</h3>
+        <p>Every factual claim in every report carries an inline citation — <code style="font-family:var(--font-mono);font-size:0.8em;color:var(--accent-green)">[CloudTrail: RunInstances]</code>, <code style="font-family:var(--font-mono);font-size:0.8em;color:var(--accent-green)">[Pricing: ec2_ondemand_pricing.md]</code>. Conclusions beyond evidence are tagged <code style="font-family:var(--font-mono);font-size:0.8em;color:var(--accent-green)">[INFERENCE]</code>.</p>
+      </div>
+
+      <div class="feature-card" style="--card-accent: #EC4899; --icon-bg: rgba(236,72,153,0.12);">
+        <div class="feature-icon">📊</div>
+        <h3>Evaluation Framework</h3>
+        <p>7 metrics including causal attribution accuracy, evidence recall, RAGAS faithfulness scoring, time-to-explanation, human audit pass rate, and a feedback loop quality methodology.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Dashboard ─────────────────────────────────────────────────── -->
+<section id="dashboard">
+  <div class="container">
+    <div class="section-label">The Dashboard</div>
+    <h2 class="section-title">The Investigation Dashboard</h2>
+    <p class="section-sub">
+      A fully interactive Streamlit application with five purpose-built views for exploring,
+      navigating, and auditing cost investigations.
+    </p>
+
+    <div class="views-grid">
+      <div class="view-card">
+        <div class="view-num">1</div>
+        <div>
+          <h4>Timeline</h4>
+          <p>Interactive Plotly cost trend chart, 4 KPI metric cards, and a sortable anomaly table with one-click "Investigate" buttons that auto-run the full pipeline.</p>
+        </div>
+      </div>
+      <div class="view-card">
+        <div class="view-num">2</div>
+        <div>
+          <h4>Investigation</h4>
+          <p>Full 7-section report rendered in markdown with Previous / Next navigation across all investigated anomalies. Colour-coded confidence levels and status banners.</p>
+        </div>
+      </div>
+      <div class="view-card">
+        <div class="view-num">3</div>
+        <div>
+          <h4>Evidence Explorer</h4>
+          <p>Per-hypothesis expandable cards showing evidence items, quantitative cost calculations, causal mechanism descriptions, and ruled-out events with reasons.</p>
+        </div>
+      </div>
+      <div class="view-card">
+        <div class="view-num">4</div>
+        <div>
+          <h4>Compare</h4>
+          <p>Grouped Plotly bar chart overlaying expected vs. actual costs across all anomalies simultaneously. Side-by-side confidence scores for quick triage.</p>
+        </div>
+      </div>
+      <div class="view-card">
+        <div class="view-num">5</div>
+        <div>
+          <h4>Feedback</h4>
+          <p>Human audit interface: actionability rating, free-text actual root cause field. Submissions save timestamped JSON files that can be ingested back into ChromaDB to improve future investigations.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshots-grid">
+      <div class="screenshot-frame">
+        <div class="frame-bar">
+          <span class="frame-dot fd-red"></span>
+          <span class="frame-dot fd-yellow"></span>
+          <span class="frame-dot fd-green"></span>
+          <span class="frame-title">Timeline View</span>
+        </div>
+        <div class="frame-content">
+          <span class="frame-icon">📈</span>
+          <div class="frame-placeholder">[Timeline View Screenshot]</div>
+        </div>
+      </div>
+
+      <div class="screenshot-frame">
+        <div class="frame-bar">
+          <span class="frame-dot fd-red"></span>
+          <span class="frame-dot fd-yellow"></span>
+          <span class="frame-dot fd-green"></span>
+          <span class="frame-title">Investigation Report</span>
+        </div>
+        <div class="frame-content">
+          <span class="frame-icon">📋</span>
+          <div class="frame-placeholder">[Investigation Report Screenshot]</div>
+        </div>
+      </div>
+
+      <div class="screenshot-frame">
+        <div class="frame-bar">
+          <span class="frame-dot fd-red"></span>
+          <span class="frame-dot fd-yellow"></span>
+          <span class="frame-dot fd-green"></span>
+          <span class="frame-title">Evidence Explorer</span>
+        </div>
+        <div class="frame-content">
+          <span class="frame-icon">🔎</span>
+          <div class="frame-placeholder">[Evidence Explorer Screenshot]</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-note">
+      💡 <span>To try the live demo: clone the repo and run <code>python demo.py</code> then <code>streamlit run dashboard/app.py</code> — no AWS account needed.</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Evaluation ─────────────────────────────────────────────────── -->
+<section id="evaluation">
+  <div class="container">
+    <div class="section-label">Evaluation Results</div>
+    <h2 class="section-title">Performance</h2>
+    <p class="section-sub">
+      All automated metrics evaluated on three synthetic anomaly injections with known
+      ground-truth root causes and causal CloudTrail events.
+    </p>
+
+    <div class="eval-table-wrap">
+      <table class="eval-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Target</th>
+            <th>Result</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="metric-name">Causal Attribution Accuracy</td>
+            <td>≥ 80%</td>
+            <td><span class="result-val result-pass">100.0%</span> <span style="font-size:0.78rem;color:var(--text-faint)">(3/3)</span></td>
+            <td><span class="status-badge badge-pass">✅ PASS</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Evidence Recall</td>
+            <td>≥ 85%</td>
+            <td><span class="result-val result-pass">100.0%</span></td>
+            <td><span class="status-badge badge-pass">✅ PASS</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Faithfulness Score <span style="font-size:0.75em;color:var(--text-faint)">(citation ratio)</span></td>
+            <td>≥ 90%</td>
+            <td><span class="result-val result-pass">93.3%</span></td>
+            <td><span class="status-badge badge-pass">✅ PASS</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Time to Explanation</td>
+            <td>≤ 300 s</td>
+            <td><span class="result-val result-pass">32.8 s</span> <span style="font-size:0.78rem;color:var(--text-faint)">avg</span></td>
+            <td><span class="status-badge badge-pass">✅ PASS</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Human Audit Pass Rate</td>
+            <td>≥ 70%</td>
+            <td><span class="result-val result-pend">pending feedback</span></td>
+            <td><span class="status-badge badge-manual">⏳ Manual</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Time to Insight <span style="font-size:0.75em;color:var(--text-faint)">(UX)</span></td>
+            <td>&lt; 3 min</td>
+            <td><span class="result-val result-pend">pending user study</span></td>
+            <td><span class="status-badge badge-manual">⏳ Manual</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Feedback Loop Quality</td>
+            <td>methodology</td>
+            <td><span class="result-val result-pend">methodology implemented</span></td>
+            <td><span class="status-badge badge-manual">⏳ Manual</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="eval-note">
+      <span>ℹ️</span>
+      Faithfulness is measured as the fraction of content lines in a report that carry an inline citation
+      (<code style="font-family:var(--font-mono);font-size:0.85em;color:var(--accent-cyan)">[CloudTrail: …]</code>,
+      <code style="font-family:var(--font-mono);font-size:0.85em;color:var(--accent-cyan)">[Pricing: …]</code>) or
+      <code style="font-family:var(--font-mono);font-size:0.85em;color:var(--accent-cyan)">[INFERENCE]</code> tag.
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Tech Stack ────────────────────────────────────────────────── -->
+<section id="tech">
+  <div class="container text-center">
+    <div class="section-label" style="display:table;margin:0 auto 1rem;">Tech Stack</div>
+    <h2 class="section-title">Built With</h2>
+
+    <div class="tech-pills" style="justify-content:center;">
+      <div class="tech-pill"><span class="pill-icon">🐍</span> Python 3.11+</div>
+      <div class="tech-pill"><span class="pill-icon">🤖</span> Anthropic Claude Sonnet</div>
+      <div class="tech-pill"><span class="pill-icon">🗄️</span> ChromaDB</div>
+      <div class="tech-pill"><span class="pill-icon">🖥️</span> Streamlit</div>
+      <div class="tech-pill"><span class="pill-icon">📊</span> RAGAS</div>
+      <div class="tech-pill"><span class="pill-icon">🔤</span> sentence-transformers</div>
+      <div class="tech-pill"><span class="pill-icon">🐼</span> pandas</div>
+      <div class="tech-pill"><span class="pill-icon">📈</span> Plotly</div>
+      <div class="tech-pill"><span class="pill-icon">⛅</span> boto3</div>
+      <div class="tech-pill"><span class="pill-icon">🔗</span> LangChain</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Gemini Test ────────────────────────────────────────────────── -->
+<section id="gemini">
+  <div class="container">
+    <div class="section-label">Design Rationale</div>
+    <h2 class="section-title">Why Not Just Ask ChatGPT?</h2>
+    <p class="section-sub">
+      A generic LLM has no access to your actual cost data, your CloudTrail events, or your
+      real AWS pricing. Here's what separates a multi-agent system from a prompt.
+    </p>
+
+    <div class="gemini-grid">
+      <div class="gemini-side gemini-llm">
+        <span class="gemini-label">Generic LLM</span>
+        <h4>"Why did my AWS bill spike?"</h4>
+        <ul class="gemini-list">
+          <li><span class="li-icon">❌</span> Guesses based on training data — no access to your actual costs</li>
+          <li><span class="li-icon">❌</span> Cannot read your CloudTrail event logs</li>
+          <li><span class="li-icon">❌</span> No quantitative cost math — confabulates plausible-sounding numbers</li>
+          <li><span class="li-icon">❌</span> Cannot distinguish correlation from causation in your specific context</li>
+          <li><span class="li-icon">❌</span> No audit trail — you cannot verify where claims came from</li>
+          <li><span class="li-icon">❌</span> One-shot: cannot explore different hypotheses interactively</li>
+        </ul>
+      </div>
+
+      <div class="gemini-side gemini-cs">
+        <span class="gemini-label">CostSherlock</span>
+        <h4>Agentic investigation on your real data</h4>
+        <ul class="gemini-list">
+          <li><span class="li-icon">✅</span> Reads your actual Cost Explorer JSON — real numbers, not guesses</li>
+          <li><span class="li-icon">✅</span> Correlates against your real CloudTrail event logs</li>
+          <li><span class="li-icon">✅</span> Validates every hypothesis with unit × price = cost math</li>
+          <li><span class="li-icon">✅</span> Explicitly rules out wrong mechanisms before attributing cause</li>
+          <li><span class="li-icon">✅</span> Every claim cites a specific event ID or pricing document</li>
+          <li><span class="li-icon">✅</span> Interactive: explore, compare, and provide corrective feedback</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="differentiator-box">
+      <p>
+        The key insight: cost anomaly investigation requires <strong>real data access</strong>,
+        <strong>multi-step orchestration</strong> (detect → correlate → reason → report),
+        <strong>quantitative validation</strong> (does the math actually work out?), and
+        <strong>evidence grounding</strong> (where did this claim come from?). A single LLM
+        call can do none of these reliably. A four-agent pipeline, by design, does all of them.
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Team ──────────────────────────────────────────────────────── -->
+<section id="team">
+  <div class="container text-center">
+    <div class="section-label" style="display:table;margin:0 auto 1rem;">Team</div>
+    <h2 class="section-title">The Investigators</h2>
+    <p class="section-sub" style="margin:0 auto 3.5rem;">
+      Northeastern University · INFO 7375 Generative AI · Spring 2026
+    </p>
+
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar-lg ta-vn">VN</div>
+        <h3>Vatsal Naik</h3>
+        <div class="role">Backend &amp; AI Pipeline</div>
+        <p class="bio">
+          Designed and implemented the four-agent pipeline, RAG knowledge base
+          (50 documents, ChromaDB ingestion), the evaluation framework with 7 metrics,
+          the pipeline orchestrator, and demo mode.
+        </p>
+        <div class="team-contributions">
+          <span class="contrib-tag">Sentinel Agent</span>
+          <span class="contrib-tag">Detective Agent</span>
+          <span class="contrib-tag">Analyst Agent</span>
+          <span class="contrib-tag">Narrator Agent</span>
+          <span class="contrib-tag">RAG Knowledge Base</span>
+          <span class="contrib-tag">Evaluation Framework</span>
+          <span class="contrib-tag">Pipeline Orchestrator</span>
+        </div>
+      </div>
+
+      <div class="team-card">
+        <div class="team-avatar-lg ta-pg">PG</div>
+        <h3>Priti Ghosh</h3>
+        <div class="role">Frontend &amp; Evaluation</div>
+        <p class="bio">
+          Built the Streamlit dashboard with all five views, Plotly visualizations,
+          the human feedback mechanism, and the usability evaluation methodology
+          including the Time-to-Insight UX metric.
+        </p>
+        <div class="team-contributions">
+          <span class="contrib-tag">Streamlit Dashboard</span>
+          <span class="contrib-tag">Timeline View</span>
+          <span class="contrib-tag">Evidence Explorer</span>
+          <span class="contrib-tag">Compare View</span>
+          <span class="contrib-tag">Feedback Loop</span>
+          <span class="contrib-tag">Plotly Charts</span>
+          <span class="contrib-tag">Usability Evaluation</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="uni-badge">
+      🎓 &nbsp; Northeastern University &nbsp;·&nbsp; Khoury College of Computer Sciences &nbsp;·&nbsp; INFO 7375 — Generative AI
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Footer ────────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-links">
+      <a href="https://github.com/naik-vatsal/costsherlock" target="_blank" rel="noopener">GitHub Repository</a>
+      <a href="https://github.com/naik-vatsal/costsherlock#readme" target="_blank" rel="noopener">Documentation</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#evaluation">Evaluation</a>
+      <a href="#team">Team</a>
+    </div>
+    <p class="footer-copy">
+      Built with <a href="https://anthropic.com" target="_blank" rel="noopener">Claude Sonnet</a>,
+      <a href="https://www.trychroma.com" target="_blank" rel="noopener">ChromaDB</a>, and
+      <a href="https://streamlit.io" target="_blank" rel="noopener">Streamlit</a>
+      &nbsp;·&nbsp;
+      INFO 7375 — Generative AI &nbsp;·&nbsp; Northeastern University
+      <br>
+      <span style="color:var(--text-faint)">© 2026 Vatsal Naik &amp; Priti Ghosh</span>
+    </p>
+  </div>
+</footer>
+
+<!-- ── JS: Intersection observer for scroll animations ───────────── -->
+<script>
+(function () {
+  'use strict';
+
+  // Smooth active-nav highlighting
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(a => {
+          a.style.color = a.getAttribute('href') === '#' + id
+            ? 'var(--text-primary)'
+            : '';
+        });
+      }
+    });
+  }, { threshold: 0.35 });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Fade-in on scroll for feature cards and other elements
+  const fadeTargets = document.querySelectorAll(
+    '.feature-card, .view-card, .team-card, .vs-item, .agent-col, .tech-pill, .eval-table tbody tr'
+  );
+
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        fadeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  fadeTargets.forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = `opacity 0.5s ease ${(i % 6) * 0.07}s, transform 0.5s ease ${(i % 6) * 0.07}s`;
+    fadeObserver.observe(el);
+  });
+
+  // Nav shadow on scroll
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    nav.style.boxShadow = window.scrollY > 10
+      ? '0 4px 24px rgba(0,0,0,0.4)'
+      : '';
+  }, { passive: true });
+})();
+</script>
+
+</body>
+</html>
