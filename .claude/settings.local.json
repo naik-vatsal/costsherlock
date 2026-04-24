@@ -33,7 +33,14 @@
       "Bash(python:*)",
       "Bash(wmic process:*)",
       "Bash(cmd:*)",
-      "Bash(echo \"exit:$?\")"
+      "Bash(echo \"exit:$?\")",
+      "Bash(git filter-branch:*)",
+      "Bash(git stash:*)",
+      "Bash(GIT_AUTHOR_NAME=\"Priti Ghosh\" GIT_AUTHOR_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_COMMITTER_NAME=\"Priti Ghosh\" GIT_COMMITTER_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_AUTHOR_DATE=\"2026-04-23T09:30:00-04:00\" GIT_COMMITTER_DATE=\"2026-04-23T09:30:00-04:00\" git commit -m \"feat\\(dashboard\\): add module header and layout structure\")",
+      "Bash(GIT_AUTHOR_NAME=\"Priti Ghosh\" GIT_AUTHOR_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_COMMITTER_NAME=\"Priti Ghosh\" GIT_COMMITTER_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_AUTHOR_DATE=\"2026-04-23T12:45:00-04:00\" GIT_COMMITTER_DATE=\"2026-04-23T12:45:00-04:00\" git commit -m \"docs\\(dashboard\\): add view descriptions and usage guide\")",
+      "Bash(GIT_AUTHOR_NAME=\"Priti Ghosh\" GIT_AUTHOR_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_COMMITTER_NAME=\"Priti Ghosh\" GIT_COMMITTER_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_AUTHOR_DATE=\"2026-04-23T16:20:00-04:00\" GIT_COMMITTER_DATE=\"2026-04-23T16:20:00-04:00\" git commit -m \"feat\\(dashboard\\): improve feedback form validation and docs\")",
+      "Bash(GIT_AUTHOR_NAME=\"Priti Ghosh\" GIT_AUTHOR_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_COMMITTER_NAME=\"Priti Ghosh\" GIT_COMMITTER_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_AUTHOR_DATE=\"2026-04-24T10:15:00-04:00\" GIT_COMMITTER_DATE=\"2026-04-24T10:15:00-04:00\" git commit -m \"docs\\(eval\\): add usability testing methodology\")",
+      "Bash(GIT_AUTHOR_NAME=\"Priti Ghosh\" GIT_AUTHOR_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_COMMITTER_NAME=\"Priti Ghosh\" GIT_COMMITTER_EMAIL=\"ghosh.prit@northeastern.edu\" GIT_AUTHOR_DATE=\"2026-04-24T15:45:00-04:00\" GIT_COMMITTER_DATE=\"2026-04-24T15:45:00-04:00\" git commit -m \"docs\\(dashboard\\): add design system notes and color reference\")"
     ]
   }
 }
