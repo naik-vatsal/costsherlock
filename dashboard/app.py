@@ -315,6 +315,35 @@ if st.session_state._pending_toast:
 # ── Cached resources ──────────────────────────────────────────────────────────
 
 @st.cache_resource
+def _ensure_knowledge_base() -> bool:
+    """Build the RAG knowledge base if it doesn't already exist.
+
+    Runs exactly once per deployment (cached by st.cache_resource).
+    On Streamlit Cloud, chroma_db/ is not in the repo, so this builds
+    it from the markdown documents in rag/documents/ on first startup.
+    """
+    import chromadb
+
+    db_path = str(_ROOT / "chroma_db")
+    client = chromadb.PersistentClient(path=db_path)
+    try:
+        col = client.get_collection("costsherlock_docs")
+        logging.getLogger(__name__).info(
+            "Knowledge base ready: %d chunks in collection", col.count()
+        )
+        return True
+    except Exception:
+        logging.getLogger(__name__).info(
+            "Knowledge base not found — building from rag/documents/…"
+        )
+        from rag.ingest import build_knowledge_base
+
+        docs_dir = str(_ROOT / "rag" / "documents")
+        build_knowledge_base(docs_dir=docs_dir, db_path=db_path)
+        return True
+
+
+@st.cache_resource
 def _get_analyst() -> Analyst:
     return Analyst()
 
@@ -322,6 +351,11 @@ def _get_analyst() -> Analyst:
 @st.cache_resource
 def _get_narrator() -> Narrator:
     return Narrator()
+
+
+# ── Ensure knowledge base exists before any agent is constructed ──────────────
+with st.spinner("Building knowledge base (first run only)…"):
+    _ensure_knowledge_base()
 
 
 @st.cache_data
