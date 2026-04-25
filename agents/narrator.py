@@ -55,15 +55,39 @@ Inline citation tags (use these, do not paraphrase them):
     [Metric: <description>]           — for claims from CloudWatch or cost metrics
     [INFERENCE]                       — ONLY for your own reasoning not traceable to evidence
 
-EXAMPLE of a well-cited paragraph (TARGET this style):
-  On 2026-02-04, a user launched 20 r6i.xlarge instances [CloudTrail: RunInstances].
-  Each instance costs $0.252/hr [Pricing: ec2-pricing.md], giving a daily compute spend
-  of $120.96 [Metric: cost delta $118/day]. This explains 98% of the observed delta
+CITATION DENSITY REQUIREMENT: At least 85% of factual sentences in your report
+MUST contain a citation tag. For every factual claim, ask yourself: can I cite a
+specific CloudTrail event, pricing document, or metric? If yes, add the tag inline
+in that same sentence. Only use [INFERENCE] when the claim genuinely goes beyond
+the provided evidence and no event or document supports it.
+
+CITE EVERY SENTENCE THAT CONTAINS:
+  - Any dollar amount, percentage, or count
+  - Any past-tense action (was changed, was launched, was deleted, was modified, etc.)
+  - Any actor name, timestamp, or resource identifier
+  - Any pricing rate, unit cost, or billing dimension
+  - Any timeout, memory, concurrency, or configuration value
+  - Any causal assertion (caused by, led to, explains, accounts for, triggered)
+  - Any service-specific term (invocation, GB-second, lifecycle, NAT Gateway, etc.)
+
+EXAMPLE of a well-cited paragraph — EC2 (WRITE LIKE THIS):
+  On 2026-01-29, 20 c5.2xlarge instances were launched by deploy-bot
+  [CloudTrail: RunInstances]. Each instance costs $0.34/hr
+  [Pricing: ec2_ondemand_pricing.md], giving a daily delta of ~$163
+  [Metric: cost delta]. This accounts for 98% of the observed spike
   [CloudTrail: RunInstances]. The instances were never terminated [INFERENCE].
 
-EXAMPLE of an under-cited paragraph (AVOID this):
-  The cost spike was caused by new instances being launched. The instances cost about
-  $120/day. This explains the observed delta.
+BAD (DO NOT WRITE — zero citations):
+  The Lambda function timeout was changed to 900 seconds, causing longer execution
+  times and runaway recursive invocations that multiplied GB-second charges.
+
+GOOD (WRITE LIKE THIS — every claim cited):
+  The Lambda function timeout was changed to 900 seconds
+  [CloudTrail: UpdateFunctionConfiguration20150331], causing longer execution times.
+  Each invocation now consumed up to 900 s × 1 GB = 900 GB-second
+  [Pricing: lambda_pricing.md], a 30× increase over the prior 30 s timeout
+  [CloudTrail: UpdateFunctionConfiguration20150331]. Recursive invocations
+  compounded this effect [INFERENCE].
 
 Do NOT leave any cost figure, cause attribution, actor name, timestamp, or timeline
 claim uncited. If a sentence contains a number, a service name used causally, or a
@@ -144,7 +168,8 @@ _CLAIM_PATTERNS = re.compile(
     | \d{4}-\d{2}-\d{2}               # date e.g. 2026-02-04
     | \d{2}:\d{2}:\d{2}               # timestamp e.g. 16:44:01
     | launched\s+by                    # actor attribution
-    | was\s+(?:run|created|modified|deleted|started|stopped|terminated|updated)
+    | was\s+(?:run|created|modified|deleted|started|stopped|terminated|updated
+             |changed|raised|lowered|extended|set|configured|enabled|disabled)
     | (?:Run|Create|Delete|Modify|Put|Update|Stop|Start|Terminate)Instances?\b
     | (?:RunInstances|TerminateInstances|ModifyDB|PutBucket|CreateFunction
       |UpdateFunction|CreateNatGateway|ModifyInstance|CreateAutoScaling)\b
@@ -159,6 +184,25 @@ _CLAIM_PATTERNS = re.compile(
     | \bindicat\w+\b                       # indicates/indicating
     | \bimplicat\w+\b                      # implicates/implicated
     | Unexplained\s+cost                   # explicit unexplained cost label
+    # ── Lambda / serverless patterns ──────────────────────────────────────
+    | \d+\s*(?:second|minute|hour|ms)s?\b  # durations e.g. 900 seconds
+    | \btimeout\b                          # timeout config
+    | \binvocation\b                       # Lambda invocations
+    | \bGB-second\b                        # Lambda billing dimension
+    | \bGB\s+second\b                      # alternate form
+    | \brecurs\w+\b                        # recursive/recursion
+    | \bmemorySize\b                       # Lambda memory config
+    | \bMemory\s+Size\b                    # readable form
+    | \bon-demand\s+billing\b             # RDS on-demand
+    # ── Networking patterns ────────────────────────────────────────────────
+    | \bNAT\s+[Gg]ateway\b               # NAT Gateway mentions
+    | \bdata\s+transfer\b                 # transfer charges
+    | \bTransfer\s+Acceleration\b         # S3 Transfer Acceleration
+    # ── Storage / lifecycle patterns ──────────────────────────────────────
+    | \blifecycle\s+rule\b               # S3 lifecycle rules
+    | \bstorage\s+class\b                # S3 storage class transitions
+    | \bIOPS\b                            # EBS IOPS
+    | \bthroughput\b                      # EBS throughput
     """,
     re.VERBOSE | re.IGNORECASE,
 )
@@ -177,21 +221,78 @@ _SKIP_LINE_PATTERN = re.compile(
 )
 
 
-def _tag_uncited_claims(report: str) -> str:
+def _build_evidence_tags(analysis: dict) -> list[tuple[re.Pattern, str]]:
+    """Build a list of (trigger_pattern, citation_tag) pairs from analyst output.
+
+    For each hypothesis evidence item, extract the CloudTrail event name or
+    pricing doc reference and build a regex that will match natural-language
+    references to that evidence in the report text.
+
+    Args:
+        analysis: Dict with ``"hypotheses"`` key containing ``list[Hypothesis]``.
+
+    Returns:
+        List of ``(compiled_pattern, citation_tag)`` tuples, ordered so the
+        most-specific (longest event name) matches are tried first.
+    """
+    hypotheses: list[Hypothesis] = analysis.get("hypotheses", [])
+    pairs: list[tuple[re.Pattern, str]] = []
+    seen: set[str] = set()
+
+    for h in hypotheses:
+        for evidence_item in h.evidence:
+            # Extract CloudTrail event names (CamelCase identifiers)
+            for match in _CLOUDTRAIL_EVENT_RE.finditer(evidence_item):
+                event_name = match.group()
+                if event_name in seen:
+                    continue
+                seen.add(event_name)
+                # Build a liberal keyword pattern: match the core verb + noun portion
+                # e.g. "UpdateFunctionConfiguration20150331" → match "UpdateFunction"
+                # or the full name appearing literally in the line
+                core = re.escape(event_name)
+                # Also match the readable verb form, e.g. "timeout was changed" near event
+                pattern = re.compile(rf"\b{core}\b", re.IGNORECASE)
+                pairs.append((pattern, f"[CloudTrail: {event_name}]"))
+
+            # Extract pricing doc references
+            for doc_match in _PRICING_DOC_RE.finditer(evidence_item):
+                doc_name = doc_match.group()
+                if doc_name in seen:
+                    continue
+                seen.add(doc_name)
+                pattern = re.compile(rf"\b{re.escape(doc_name)}\b", re.IGNORECASE)
+                pairs.append((pattern, f"[Pricing: {doc_name}]"))
+
+    # Sort longest event name first so more-specific patterns win
+    pairs.sort(key=lambda p: len(p[1]), reverse=True)
+    return pairs
+
+
+def _tag_uncited_claims(
+    report: str,
+    evidence_tags: list[tuple[re.Pattern, str]] | None = None,
+) -> str:
     """Scan report lines for factual claims that lack a citation tag.
 
-    For each line that contains a cost figure, percentage, or causal phrase
-    but no ``[CloudTrail: …]``, ``[Pricing: …]``, ``[Metric: …]``, or
-    ``[INFERENCE: …]`` tag, prepend ``[INFERENCE]`` to that line.
+    Pass 1 (evidence injection): for any uncited claim line, scan the
+    ``evidence_tags`` list.  If a pattern matches the line text, append the
+    corresponding ``[CloudTrail: …]`` or ``[Pricing: …]`` tag.
 
-    Table rows, headers, and formatting lines are skipped to avoid mangling
-    the markdown structure.
+    Pass 2 (INFERENCE fallback): lines that still have a claim but no
+    citation after pass 1 are prepended with ``[INFERENCE]``.
+
+    Table rows, headers, and formatting lines are skipped.
 
     Args:
         report: The raw markdown report from the LLM.
+        evidence_tags: Pairs of ``(pattern, citation_tag)`` built from the
+            analyst's evidence list by :func:`_build_evidence_tags`.  If
+            ``None`` or empty, pass 1 is skipped entirely.
 
     Returns:
-        Report with ``[INFERENCE]`` prepended to any uncited claim lines.
+        Report with citations injected or ``[INFERENCE]`` prepended for any
+        uncited claim lines.
     """
     lines = report.splitlines()
     output: list[str] = []
@@ -205,6 +306,21 @@ def _tag_uncited_claims(report: str) -> str:
         has_claim = bool(_CLAIM_PATTERNS.search(line))
         has_citation = bool(_CITATION_PATTERN.search(line))
 
+        if has_claim and not has_citation and evidence_tags:
+            # Pass 1: try to inject a specific citation from evidence
+            injected = line
+            for pattern, tag in evidence_tags:
+                if pattern.search(line):
+                    injected = f"{line} {tag}"
+                    has_citation = True
+                    logger.debug(
+                        "Injected evidence citation %s into: %.60s…", tag, line.strip()
+                    )
+                    break
+            line = injected
+
+        # Re-check after possible injection
+        has_citation = bool(_CITATION_PATTERN.search(line))
         if has_claim and not has_citation:
             logger.debug("Tagging uncited claim: %.80s…", line.strip())
             output.append(f"[INFERENCE] {line}")
@@ -377,7 +493,8 @@ class Narrator:
         )
 
         raw_report = self._call_llm(user_msg)
-        report = _tag_uncited_claims(raw_report)
+        evidence_tags = _build_evidence_tags(analysis)
+        report = _tag_uncited_claims(raw_report, evidence_tags=evidence_tags)
 
         missing = [s for s in REQUIRED_SECTIONS if s not in report]
         if missing:

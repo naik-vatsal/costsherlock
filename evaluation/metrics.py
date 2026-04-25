@@ -245,6 +245,8 @@ _STRUCTURAL_RE = re.compile(
     r"|- \*\*(?:Confident|Uncertain|Would increase confidence)"  # caveats bullets
     r"|\*\*[^*]{1,60}:\*\*\s*$"  # standalone bold label lines  **Label:**
     r"|[^.!?]{1,80}:\s*$"        # short label-only lines ending with colon (transitions)
+    # cost-breakdown structural labels: **Step N …** or N. **Scenario/Step …**
+    r"|(?:\d+\.\s+)?\*\*(?:Step|Scenario|Phase|Summary|Note|Observation)\b[^*]*\*\*\.?\s*$"
     r")"
 )
 
