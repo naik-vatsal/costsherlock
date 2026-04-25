@@ -275,6 +275,18 @@ class TestMutatingEventsWhitelist:
     def test_put_metric_alarm_present(self) -> None:
         assert "PutMetricAlarm" in MUTATING_EVENTS
 
+    def test_extended_cost_affecting_events_present(self) -> None:
+        """Additional cost-affecting events added beyond CLAUDE.md baseline."""
+        extended = {
+            "UpdateFunctionConfiguration20150331",  # versioned CloudTrail name
+            "PutBucketAccelerateConfiguration",     # S3 Transfer Acceleration
+            "PutBucketVersioning",
+            "PutBucketLogging",
+            "ModifyVolumeAttribute",
+            "DeleteNatGateway",
+        }
+        assert extended.issubset(MUTATING_EVENTS)
+
     def test_read_only_names_absent(self) -> None:
         read_only = {"DescribeInstances", "GetObject", "ListBuckets", "DescribeAlarms"}
         assert read_only.isdisjoint(MUTATING_EVENTS)

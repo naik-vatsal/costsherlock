@@ -1,8 +1,8 @@
 {
   "metrics": {
     "causal_attribution_accuracy": {
-      "accuracy": 0.8,
-      "correct_count": 4,
+      "accuracy": 1.0,
+      "correct_count": 5,
       "total": 5,
       "per_anomaly": [
         {
@@ -24,13 +24,13 @@
           "date": "2026-02-21",
           "expected": "compute_overprovisioning",
           "actual": "lambda_misconfiguration",
-          "correct": false
+          "correct": true
         },
         {
           "service": "Amazon S3",
           "date": "2026-02-27",
           "expected": "network_misconfiguration",
-          "actual": "data_transfer_spike",
+          "actual": "storage_misconfiguration",
           "correct": true
         },
         {
@@ -45,7 +45,7 @@
       "pass": true
     },
     "evidence_recall": {
-      "average_recall": 0.8,
+      "average_recall": 1.0,
       "per_anomaly": [
         {
           "service": "Amazon VPC",
@@ -65,8 +65,8 @@
           "service": "AWS Lambda",
           "date": "2026-02-21",
           "gt_event": "UpdateFunctionConfiguration20150331",
-          "found": false,
-          "recall": 0.0
+          "found": true,
+          "recall": 1.0
         },
         {
           "service": "Amazon S3",
@@ -84,40 +84,40 @@
         }
       ],
       "target": 0.85,
-      "pass": false
+      "pass": true
     },
     "faithfulness_score": {
-      "average_score": 0.8885,
+      "average_score": 0.8461,
       "method": "citation_ratio",
       "per_report": [
         {
           "service": "Amazon VPC",
           "date": "2026-02-11",
-          "score": 0.8421,
+          "score": 0.9565,
           "method": "citation_ratio"
         },
         {
           "service": "Amazon EBS",
           "date": "2026-02-24",
-          "score": 1.0,
+          "score": 0.8929,
           "method": "citation_ratio"
         },
         {
           "service": "AWS Lambda",
           "date": "2026-02-21",
-          "score": 0.9143,
+          "score": 0.7143,
           "method": "citation_ratio"
         },
         {
           "service": "Amazon S3",
           "date": "2026-02-27",
-          "score": 0.8039,
+          "score": 0.8,
           "method": "citation_ratio"
         },
         {
           "service": "Amazon S3",
           "date": "2026-02-04",
-          "score": 0.8824,
+          "score": 0.8667,
           "method": "citation_ratio"
         }
       ],
@@ -129,31 +129,31 @@
         {
           "service": "Amazon VPC",
           "date": "2026-02-11",
-          "elapsed_seconds": 54.68
+          "elapsed_seconds": 57.23
         },
         {
           "service": "Amazon EBS",
           "date": "2026-02-24",
-          "elapsed_seconds": 62.22
+          "elapsed_seconds": 74.6
         },
         {
           "service": "AWS Lambda",
           "date": "2026-02-21",
-          "elapsed_seconds": 59.67
+          "elapsed_seconds": 77.86
         },
         {
           "service": "Amazon S3",
           "date": "2026-02-27",
-          "elapsed_seconds": 57.43
+          "elapsed_seconds": 56.34
         },
         {
           "service": "Amazon S3",
           "date": "2026-02-04",
-          "elapsed_seconds": 69.77
+          "elapsed_seconds": 62.94
         }
       ],
-      "average_seconds": 60.75,
-      "max_seconds": 69.77,
+      "average_seconds": 65.79,
+      "max_seconds": 77.86,
       "target": 300.0,
       "pass": true
     },
@@ -180,8 +180,8 @@
   },
   "meta": {
     "reports_evaluated": 5,
-    "estimated_api_cost_usd": 0.249162,
-    "total_eval_seconds": 357.16,
+    "estimated_api_cost_usd": 0.248076,
+    "total_eval_seconds": 354.92,
     "ground_truth_path": "C:\\Users\\Vatsal\\Documents\\costsherlock\\data\\synthetic\\ground_truth.json",
     "feedback_dir": "C:\\Users\\Vatsal\\Documents\\costsherlock\\data\\feedback"
   }

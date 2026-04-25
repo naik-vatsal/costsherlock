@@ -11,18 +11,35 @@ from agents import Anomaly, SuspectEvent
 
 logger = logging.getLogger(__name__)
 
-# Canonical whitelist from CLAUDE.md + PutMetricAlarm (CloudWatch config mutation)
+# Canonical whitelist from CLAUDE.md + additional cost-affecting mutating events.
+# CloudTrail appends an API-version suffix to some Lambda event names (e.g.
+# UpdateFunctionConfiguration20150331) — both the bare name and suffixed form are
+# included so that either format in a log file is matched.
 MUTATING_EVENTS: frozenset[str] = frozenset({
+    # ── Compute ───────────────────────────────────────────────────────────
     "RunInstances",
     "TerminateInstances",
-    "ModifyDBInstance",
-    "PutBucketLifecycleConfiguration",
-    "PutBucketPolicy",
-    "CreateFunction20150331",
-    "UpdateFunctionConfiguration",
-    "CreateNatGateway",
     "ModifyInstanceAttribute",
     "CreateAutoScalingGroup",
+    # ── Database ──────────────────────────────────────────────────────────
+    "ModifyDBInstance",
+    # ── Storage: S3 ───────────────────────────────────────────────────────
+    "PutBucketLifecycleConfiguration",
+    "PutBucketPolicy",
+    "PutBucketAccelerateConfiguration",   # Transfer Acceleration — direct cost impact
+    "PutBucketVersioning",                # Versioning retention — storage cost impact
+    "PutBucketLogging",                   # Access logging — S3 PUT/storage charges
+    # ── Storage: EBS / EFS ────────────────────────────────────────────────
+    "ModifyVolume",                       # gp2→gp3 or size change
+    "ModifyVolumeAttribute",              # IOPS / throughput changes
+    # ── Networking ────────────────────────────────────────────────────────
+    "CreateNatGateway",
+    "DeleteNatGateway",                   # Removal can indicate prior cost period
+    # ── Serverless ────────────────────────────────────────────────────────
+    "CreateFunction20150331",
+    "UpdateFunctionConfiguration",        # bare name (older SDK / some regions)
+    "UpdateFunctionConfiguration20150331",# versioned name emitted by current CloudTrail
+    # ── Observability ─────────────────────────────────────────────────────
     "PutMetricAlarm",
 })
 

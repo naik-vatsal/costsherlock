@@ -112,14 +112,21 @@ _CATEGORY_SYNONYMS: list[frozenset[str]] = [
                "monitoring_overprovisioning", "cloudwatch_misconfiguration",
                "log_misconfiguration", "cloudtrail_misconfiguration"}),
     frozenset({"storage_misconfiguration", "storage_class_misconfiguration",
-               "s3_misconfiguration", "bucket_misconfiguration"}),
+               "storage_overprovisioning",      # orphaned volumes / over-allocation
+               "s3_misconfiguration", "bucket_misconfiguration",
+               "ebs_misconfiguration"}),
+    # Lambda runaway (timeout / recursion) is compute overprovisioning by another name;
+    # the Analyst may use either term depending on evidence availability.
     frozenset({"compute_overprovisioning", "ec2_overprovisioning",
-               "instance_overprovisioning", "compute_misconfiguration"}),
+               "instance_overprovisioning", "compute_misconfiguration",
+               "lambda_misconfiguration", "serverless_misconfiguration",
+               "lambda_overprovisioning", "function_misconfiguration"}),
     frozenset({"network_misconfiguration", "data_transfer_spike",
-               "nat_misconfiguration", "vpc_misconfiguration"}),
+               "nat_misconfiguration", "vpc_misconfiguration",
+               "networking_cost_trap", "transfer_acceleration_misconfiguration"}),
     frozenset({"database_misconfiguration", "rds_misconfiguration",
-               "db_misconfiguration"}),
-    frozenset({"lambda_misconfiguration", "serverless_misconfiguration"}),
+               "db_misconfiguration", "reserved_instance_expiry",
+               "rds_overprovisioning"}),
 ]
 
 
