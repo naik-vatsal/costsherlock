@@ -302,6 +302,7 @@ _DEFAULTS: dict = {
     "z_threshold_slider": 2.5,
     "_pending_toast": "",
     "_auto_run": False,
+    "_last_timeline_click": None,  # (curve_number, point_number) of last processed chart click
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
@@ -1220,6 +1221,9 @@ if view == "Timeline":
                         )
                     )
 
+                # anomaly_trace_idx: used below for click-event detection
+                anomaly_trace_idx = len(services)
+
                 if anomalies:
                     fig.add_trace(
                         go.Scatter(
@@ -1244,7 +1248,7 @@ if view == "Timeline":
                                 )
                                 for a in anomalies
                             ],
-                            hovertemplate="%{customdata}<extra></extra>",
+                            hovertemplate="%{customdata}<br><i>Click marker to investigate →</i><extra></extra>",
                         )
                     )
 
@@ -1256,9 +1260,36 @@ if view == "Timeline":
                     xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)", title="Date"),
                     yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)", title="Daily Cost ($)"),
                     hovermode="closest",
+                    clickmode="event+select",
                     margin=dict(l=60, r=40, t=20, b=60),
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                timeline_event = st.plotly_chart(
+                    fig,
+                    use_container_width=True,
+                    key="timeline_chart",
+                    on_select="rerun",
+                )
+
+                # Handle clicks on anomaly markers (red diamonds)
+                if (
+                    anomalies
+                    and timeline_event
+                    and timeline_event.selection
+                    and timeline_event.selection.points
+                ):
+                    for pt in timeline_event.selection.points:
+                        curve_num = pt.get("curve_number", -1)
+                        point_num = pt.get("point_number", pt.get("point_index", -1))
+                        if curve_num == anomaly_trace_idx:
+                            click_id = (curve_num, point_num)
+                            if (
+                                click_id != st.session_state._last_timeline_click
+                                and 0 <= point_num < len(anomalies)
+                            ):
+                                st.session_state._last_timeline_click = click_id
+                                _on_investigate(anomalies[point_num])
+                                st.rerun()
+                            break
             except Exception as exc:
                 st.warning(f"Could not render cost chart: {exc}")
 
@@ -1434,6 +1465,7 @@ elif view == "Investigation":
                             use_container_width=True,
                             key="inv_prev",
                             on_click=_nav_prev,
+                            help="Go to previous investigation",
                         )
                     with nav_c:
                         st.selectbox(
@@ -1451,6 +1483,7 @@ elif view == "Investigation":
                             use_container_width=True,
                             key="inv_next",
                             on_click=_nav_next,
+                            help="Go to next investigation",
                         )
                     st.markdown("")
 
@@ -1558,7 +1591,8 @@ elif view == "Investigation":
                                             f'<div style="border-left:4px solid {conf_color};padding-left:10px">',
                                             unsafe_allow_html=True,
                                         )
-                                        st.progress(h.confidence, text=f"Confidence: {h.confidence:.0%}")
+                                        st.markdown(f"**Confidence:** {h.confidence:.0%}")
+                                        st.progress(h.confidence)
                                         st.caption(f"📎 {ev_count} evidence item(s)")
                                         if h.evidence:
                                             for item in h.evidence:
@@ -1696,7 +1730,8 @@ elif view == "Evidence":
                                 f'<div style="border-left:4px solid {conf_color};padding-left:10px">',
                                 unsafe_allow_html=True,
                             )
-                            st.progress(h.confidence, text=f"Confidence: {h.confidence:.0%}")
+                            st.markdown(f"**Confidence:** {h.confidence:.0%}")
+                            st.progress(h.confidence)
                             st.caption(f"📎 {ev_count} evidence item(s)")
                             if h.evidence:
                                 for item in h.evidence:
