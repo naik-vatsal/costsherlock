@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 # ── Constants ────────────────────────────────────────────────────────────────
 
 MODEL = "claude-sonnet-4-6"
-TEMPERATURE = 0.15
 MAX_TOKENS = 3000
 RETRIEVAL_TOP_K = 8
 
@@ -416,7 +415,6 @@ class Analyst:
         response = self._client.messages.create(
             model=MODEL,
             max_tokens=MAX_TOKENS,
-            temperature=TEMPERATURE,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )

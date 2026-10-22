@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 MODEL = "claude-sonnet-4-6"
-TEMPERATURE = 0.3
 MAX_TOKENS = 2500
 
 # Section headers expected in every report (used for validation).
@@ -537,7 +536,6 @@ class Narrator:
         response = self._client.messages.create(
             model=MODEL,
             max_tokens=MAX_TOKENS,
-            temperature=TEMPERATURE,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
