@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 MODEL = "claude-sonnet-5-5"
-MAX_TOKENS = 4500
+MAX_TOKENS = 8000
 
 # Section headers expected in every report (used for validation).
 REQUIRED_SECTIONS = [
@@ -539,7 +539,8 @@ class Narrator:
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
-        text = response.content[0].text
+        # Newer models may return a thinking block first; keep only the text blocks.
+        text = "".join(b.text for b in response.content if getattr(b, "type", "") == "text")
         logger.debug(
             "LLM responded: %d chars  stop_reason=%s",
             len(text),
