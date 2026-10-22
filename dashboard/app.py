@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sys
 import tempfile
 import time
@@ -429,6 +430,32 @@ def _conf_label(conf: float) -> str:
     if conf >= 0.55:
         return f"MEDIUM CONFIDENCE ({conf:.0%})"
     return f"LOW CONFIDENCE ({conf:.0%})"
+
+
+# ── Markdown escaping ─────────────────────────────────────────────────────────
+
+# A code fence or inline code span (kept verbatim), or a "$" / "~" not already escaped.
+_MD_LITERAL_RE = re.compile(r"(```.*?```|~~~.*?~~~|`[^`\n]*`)|(?<!\\)([$~])", re.DOTALL)
+
+
+def safe_md(text: str) -> str:
+    """Escape ``$`` and ``~`` so Streamlit markdown shows them literally.
+
+    Streamlit renders text between two ``$`` as math and between two ``~`` as
+    strikethrough, so report prose like "~$125/day" turns into italic,
+    monospace or struck-through runs. Only use this for text rendered as
+    markdown; inside raw HTML blocks the backslash would show.
+
+    Args:
+        text: Agent or report text about to be rendered as markdown.
+
+    Returns:
+        The text with each unescaped ``$`` and ``~`` outside code spans
+        backslash-escaped.
+    """
+    if not text:
+        return text
+    return _MD_LITERAL_RE.sub(lambda m: m.group(1) or "\\" + m.group(2), text)
 
 
 # ── API limit helpers ─────────────────────────────────────────────────────────
@@ -1550,7 +1577,7 @@ elif view == "Investigation":
                             "Check your API key and retry."
                         )
                     else:
-                        st.markdown(inv.report_markdown)
+                        st.markdown(safe_md(inv.report_markdown))
 
                     dl_col, _ = st.columns([1, 3])
                     with dl_col:
@@ -1584,7 +1611,7 @@ elif view == "Investigation":
                                 ev_count = len(h.evidence) if h.evidence else 0
                                 with ev_col:
                                     with st.expander(
-                                        f"#{h.rank}  {h.root_cause[:70]}{'…' if len(h.root_cause) > 70 else ''}",
+                                        f"#{h.rank}  {safe_md(h.root_cause[:70])}{'…' if len(h.root_cause) > 70 else ''}",
                                         expanded=(h.rank == 1),
                                     ):
                                         st.markdown(
@@ -1596,7 +1623,7 @@ elif view == "Investigation":
                                         st.caption(f"📎 {ev_count} evidence item(s)")
                                         if h.evidence:
                                             for item in h.evidence:
-                                                st.markdown(f"- {item}")
+                                                st.markdown(f"- {safe_md(item)}")
                                         if h.cost_calculation:
                                             st.markdown("**Cost Calculation:**")
                                             st.markdown(
@@ -1604,7 +1631,7 @@ elif view == "Investigation":
                                                 unsafe_allow_html=True,
                                             )
                                         if h.causal_mechanism:
-                                            st.info(h.causal_mechanism)
+                                            st.info(safe_md(h.causal_mechanism))
                                         st.markdown('</div>', unsafe_allow_html=True)
 
                 with tab_ro:
@@ -1623,9 +1650,9 @@ elif view == "Investigation":
                         for ro in inv.ruled_out:
                             date_str = ro.event_time[:10] if ro.event_time else "N/A"
                             row_cols = st.columns([2, 1.5, 3])
-                            row_cols[0].write(f"{ro.event_name}\n\n_{date_str}_")
+                            row_cols[0].write(f"{safe_md(ro.event_name)}\n\n_{date_str}_")
                             row_cols[1].markdown(_category_badge(ro.category), unsafe_allow_html=True)
-                            row_cols[2].write(ro.reason)
+                            row_cols[2].write(safe_md(ro.reason))
                             st.markdown(
                                 "<hr style='margin:2px 0;border:none;border-top:1px solid rgba(128,128,128,0.1)'>",
                                 unsafe_allow_html=True,
@@ -1633,7 +1660,9 @@ elif view == "Investigation":
 
                 with tab_rem:
                     if inv.remediation:
-                        st.markdown(inv.remediation)
+                        st.markdown(safe_md(
+                            "\n".join(f"{n}. {step}" for n, step in enumerate(inv.remediation, start=1))
+                        ))
                     else:
                         st.info("No remediation steps extracted.")
                     dl_rem_col, _ = st.columns([1, 3])
@@ -1723,7 +1752,7 @@ elif view == "Evidence":
                     ev_count = len(h.evidence) if h.evidence else 0
                     with ev_col:
                         with st.expander(
-                            f"#{h.rank}  {h.root_cause[:70]}{'…' if len(h.root_cause) > 70 else ''}",
+                            f"#{h.rank}  {safe_md(h.root_cause[:70])}{'…' if len(h.root_cause) > 70 else ''}",
                             expanded=(h.rank == 1),
                         ):
                             st.markdown(
@@ -1735,7 +1764,7 @@ elif view == "Evidence":
                             st.caption(f"📎 {ev_count} evidence item(s)")
                             if h.evidence:
                                 for item in h.evidence:
-                                    st.markdown(f"- {item}")
+                                    st.markdown(f"- {safe_md(item)}")
                             if h.cost_calculation:
                                 st.markdown("**Cost Calculation:**")
                                 st.markdown(
@@ -1743,7 +1772,7 @@ elif view == "Evidence":
                                     unsafe_allow_html=True,
                                 )
                             if h.causal_mechanism:
-                                st.info(h.causal_mechanism)
+                                st.info(safe_md(h.causal_mechanism))
                             st.markdown('</div>', unsafe_allow_html=True)
 
         st.subheader(f"Ruled Out Events ({len(inv.ruled_out)})")
@@ -1762,9 +1791,9 @@ elif view == "Evidence":
             for ro in inv.ruled_out:
                 date_str = ro.event_time[:10] if ro.event_time else "N/A"
                 row_cols = st.columns([2, 1.8, 3.5])
-                row_cols[0].write(f"{ro.event_name}\n\n_{date_str}_")
+                row_cols[0].write(f"{safe_md(ro.event_name)}\n\n_{date_str}_")
                 row_cols[1].markdown(_category_badge(ro.category), unsafe_allow_html=True)
-                row_cols[2].write(ro.reason)
+                row_cols[2].write(safe_md(ro.reason))
                 st.markdown(
                     "<hr style='margin:2px 0;border:none;border-top:1px solid rgba(128,128,128,0.1)'>",
                     unsafe_allow_html=True,
@@ -1985,7 +2014,7 @@ elif view == "Feedback":
             for h in inv.hypotheses:
                 st.markdown(
                     f"**Hypothesis {h.rank}** — "
-                    f"{h.root_cause[:110]}{'…' if len(h.root_cause) > 110 else ''}"
+                    f"{safe_md(h.root_cause[:110])}{'…' if len(h.root_cause) > 110 else ''}"
                 )
                 verdict = st.radio(
                     "Verdict",
