@@ -39,7 +39,7 @@ CLOUDTRAIL  = "data/synthetic/demo_cloudtrail"
 OUTPUT_DIR  = Path("reports/demo")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# ── Approximate token costs for claude-sonnet-4-6 ─────────────────────
+# ── Approximate token costs for claude-sonnet-5-5 ─────────────────────
 # $3.00 / 1M input tokens,  $15.00 / 1M output tokens
 _INPUT_COST_PER_TOKEN  = 3.00 / 1_000_000
 _OUTPUT_COST_PER_TOKEN = 15.00 / 1_000_000
@@ -284,7 +284,7 @@ def run_demo() -> None:
             f"[bold]Est. input tok :[/bold]  ~{total_input_tokens:,}\n"
             f"[bold]Est. output tok:[/bold]  ~{total_output_tokens:,}\n"
             f"[bold]Est. API cost  :[/bold]  [green]~${est_cost:.4f}[/green]  "
-            f"[dim](claude-sonnet-4: $3/1M in · $15/1M out)[/dim]\n"
+            f"[dim](estimate: $3/1M in · $15/1M out)[/dim]\n"
             f"[bold]Total elapsed  :[/bold]  {time.monotonic() - demo_start:.1f}s\n"
             f"[bold]Reports saved  :[/bold]  {OUTPUT_DIR}/",
             title="[white] Run Statistics [/white]",

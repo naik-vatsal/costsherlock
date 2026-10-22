@@ -15,7 +15,6 @@ from pathlib import Path
 
 import anthropic
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from dotenv import load_dotenv
@@ -29,19 +28,14 @@ sys.path.insert(0, str(_ROOT))
 load_dotenv(dotenv_path=_ROOT / ".env", override=True)
 
 from agents import Anomaly, InvestigationReport, RuledOutEvent  # noqa: E402
-from agents.analyst import Analyst  # noqa: E402
 from agents.detective import Detective  # noqa: E402
-from agents.narrator import Narrator  # noqa: E402
 from agents.sentinel import Sentinel  # noqa: E402
-from pipeline import _extract_remediation  # noqa: E402
+from dashboard import jobs, theme  # noqa: E402
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 DEMO_COST_PATH = str(_ROOT / "data" / "synthetic" / "demo_cost.json")
 DEMO_CLOUDTRAIL_DIR = str(_ROOT / "data" / "synthetic" / "demo_cloudtrail")
-MODEL_NAME = "claude-sonnet-4-6"
-_INPUT_COST_PER_TOKEN = 3.00 / 1_000_000
-_OUTPUT_COST_PER_TOKEN = 15.00 / 1_000_000
-_CHARS_PER_TOKEN = 4.0
+MODEL_NAME = "claude-sonnet-5-5"
 
 # API protection
 API_CALL_LIMIT = 30
@@ -49,12 +43,12 @@ MAX_ANOMALIES_DISPLAYED = 10
 # Streamlit's default upload limit
 STREAMLIT_MAX_UPLOAD_MB = 200
 
-NAVY = "#1B2A4A"
-BLUE = "#2563EB"
-GREEN = "#059669"
-RED = "#DC2626"
-ORANGE = "#F97316"
-AMBER = "#D97706"
+NAVY = "#14161F"
+BLUE = "#3B5BFF"
+GREEN = "#1FA971"
+RED = "#E5484D"
+ORANGE = "#F08A24"
+AMBER = "#F08A24"
 VIEWS = ["Timeline", "Investigation", "Evidence", "Compare", "Feedback"]
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -62,230 +56,12 @@ st.set_page_config(
     page_title="CostSherlock",
     page_icon="🔍",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown(
-    f"""
-    <style>
-        [data-testid="stHeader"] {{
-            background-color: {NAVY};
-            border-bottom: 2px solid #2563EB;
-        }}
-        [data-testid="stHeader"] button svg {{
-            fill: #CBD5E1 !important;
-        }}
-        .main .block-container {{
-            padding-top: 1.5rem;
-            padding-bottom: 3rem;
-        }}
-        [data-testid="stSidebar"] {{
-            background: linear-gradient(180deg, #0F1E38 0%, #1B2A4A 60%, #1e3a5f 100%);
-        }}
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] p,
-        [data-testid="stSidebar"] span,
-        [data-testid="stSidebar"] div {{
-            color: #CBD5E1 !important;
-        }}
-        [data-testid="stSidebar"] h1,
-        [data-testid="stSidebar"] h2,
-        [data-testid="stSidebar"] h3 {{
-            color: #FFFFFF !important;
-        }}
-        [data-testid="stSidebar"] [role="radio"]:hover label {{
-            color: #FFFFFF !important;
-        }}
-        .sb-brand {{
-            background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(5,150,105,0.15));
-            border: 1px solid rgba(96,165,250,0.3);
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-bottom: 16px;
-        }}
-        .sb-brand-title {{
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: #FFFFFF !important;
-            letter-spacing: -0.01em;
-        }}
-        .sb-brand-sub {{
-            font-size: 0.72rem;
-            color: #93C5FD !important;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }}
-        .sb-stat {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255,255,255,0.06);
-            border-radius: 8px;
-            padding: 7px 12px;
-            margin-bottom: 6px;
-        }}
-        .sb-stat-label {{
-            font-size: 0.75rem;
-            color: #94A3B8 !important;
-        }}
-        .sb-stat-value {{
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #E2E8F0 !important;
-        }}
-        .status-banner {{
-            border-radius: 8px;
-            padding: 10px 18px;
-            margin-bottom: 16px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            letter-spacing: 0.03em;
-        }}
-        .status-high {{
-            background: rgba(5,150,105,0.12);
-            border: 1px solid #059669;
-            color: #059669;
-        }}
-        .status-medium {{
-            background: rgba(217,119,6,0.10);
-            border: 1px solid #D97706;
-            color: #D97706;
-        }}
-        .status-low {{
-            background: rgba(220,38,38,0.10);
-            border: 1px solid #DC2626;
-            color: #DC2626;
-        }}
-        .sev-badge {{
-            display: inline-block;
-            padding: 3px 12px;
-            border-radius: 20px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
-            color: #FFFFFF;
-        }}
-        .sev-critical {{ background: #DC2626; }}
-        .sev-warning {{ background: #D97706; }}
-        .sev-info {{ background: #2563EB; }}
-        div.btn-investigated button {{
-            background-color: #059669 !important;
-            border-color: #059669 !important;
-            color: white !important;
-        }}
-        div.btn-investigated button:hover {{
-            background-color: #047857 !important;
-        }}
-        @keyframes shimmer {{
-            0% {{ background-position: -1000px 0; }}
-            100% {{ background-position: 1000px 0; }}
-        }}
-        .loading-shimmer {{
-            background: linear-gradient(90deg, var(--secondary-background-color) 25%, rgba(128,128,128,0.1) 50%, var(--secondary-background-color) 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 8px;
-            height: 16px;
-            margin-bottom: 8px;
-        }}
-        .anomaly-callout {{
-            background: var(--secondary-background-color);
-            color: var(--text-color);
-            border-left: 5px solid {RED};
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(220, 38, 38, 0.12);
-            padding: 16px 22px;
-            margin-bottom: 18px;
-        }}
-        .info-card {{
-            background: var(--secondary-background-color);
-            color: var(--text-color);
-            border-radius: 10px;
-            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
-            padding: 18px 22px;
-            margin-bottom: 14px;
-            border-top: 3px solid {BLUE};
-        }}
-        .tbl-row {{
-            border-bottom: 1px solid rgba(128, 128, 128, 0.15);
-            padding: 4px 0;
-            transition: background 0.1s;
-        }}
-        .tbl-row-high {{
-            background: rgba(220, 38, 38, 0.06);
-            border-bottom: 1px solid rgba(220, 38, 38, 0.2);
-        }}
-        .cost-box {{
-            background: var(--secondary-background-color);
-            color: var(--text-color);
-            border: 1px solid {GREEN};
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-family: "Courier New", Courier, monospace;
-            font-size: 0.87rem;
-            white-space: pre-wrap;
-            margin: 8px 0 12px 0;
-        }}
-        .cat-badge {{
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.73rem;
-            font-weight: 700;
-            color: #FFFFFF;
-            letter-spacing: 0.04em;
-            margin-bottom: 8px;
-        }}
-        [data-testid="stMetric"] {{
-            background: rgba(37, 99, 235, 0.07) !important;
-            border-radius: 10px;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.07);
-            padding: 14px 16px !important;
-            border-left: 3px solid {BLUE};
-        }}
-        [data-testid="stMetric"] * {{
-            color: var(--text-color) !important;
-        }}
-        [data-testid="stMetric"] [data-testid="stMetricValue"] *,
-        [data-testid="stMetric"] div[class*="metric-container"] div:nth-child(2) * {{
-            font-weight: 700 !important;
-        }}
-        [data-testid="stDownloadButton"] button {{
-            border-color: {BLUE} !important;
-            color: {BLUE} !important;
-        }}
-        .cs-footer {{
-            text-align: center;
-            color: var(--text-color);
-            opacity: 0.55;
-            font-size: 0.78rem;
-            padding: 24px 0 8px 0;
-            border-top: 1px solid rgba(128, 128, 128, 0.2);
-            margin-top: 48px;
-        }}
-        .api-limit-warn {{
-            background: rgba(217,119,6,0.10);
-            border: 1px solid #D97706;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 0.75rem;
-            color: #D97706 !important;
-            margin-top: 4px;
-        }}
-        .api-limit-ok {{
-            background: rgba(5,150,105,0.08);
-            border: 1px solid #059669;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 0.75rem;
-            color: #34D399 !important;
-            margin-top: 4px;
-        }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# ── Visual system ─────────────────────────────────────────────────────────────
+theme.inject_css()
+theme.inject_motion()
 
 # ── Session state initialisation ──────────────────────────────────────────────
 _DEFAULTS: dict = {
@@ -304,15 +80,13 @@ _DEFAULTS: dict = {
     "_pending_toast": "",
     "_auto_run": False,
     "_last_timeline_click": None,  # (curve_number, point_number) of last processed chart click
+    "job_errors": {},              # (service, date) -> error message for failed background jobs
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
         st.session_state[_k] = _v
-
-# ── Consume any pending toast immediately ─────────────────────────────────────
-if st.session_state._pending_toast:
-    st.toast(st.session_state._pending_toast, icon="✅")
-    st.session_state._pending_toast = ""
+if "_board" not in st.session_state:
+    st.session_state._board = jobs.JobBoard()  # background investigation jobs (this session)
 
 # ── Cached resources ──────────────────────────────────────────────────────────
 
@@ -345,19 +119,10 @@ def _ensure_knowledge_base() -> bool:
         return True
 
 
-@st.cache_resource
-def _get_analyst() -> Analyst:
-    return Analyst()
-
-
-@st.cache_resource
-def _get_narrator() -> Narrator:
-    return Narrator()
-
-
 # ── Ensure knowledge base exists before any agent is constructed ──────────────
 with st.spinner("Building knowledge base (first run only)…"):
     _ensure_knowledge_base()
+jobs.warm_up()  # load the embedding model in the background while the user explores
 
 
 @st.cache_data
@@ -377,12 +142,6 @@ def _detect_anomalies_cached(path: str, z_threshold: float) -> list[dict]:
 
 
 # ── Helper utilities ──────────────────────────────────────────────────────────
-
-def _estimate_api_cost(input_text: str, output_text: str) -> float:
-    in_tok = len(input_text) / _CHARS_PER_TOKEN
-    out_tok = len(output_text) / _CHARS_PER_TOKEN
-    return in_tok * _INPUT_COST_PER_TOKEN + out_tok * _OUTPUT_COST_PER_TOKEN
-
 
 _BADGE_COLORS: dict[str, str] = {
     "WRONG_MECHANISM": RED,
@@ -587,255 +346,126 @@ def _persist_investigation(inv: InvestigationReport) -> None:
         st.session_state.investigations.append(inv)
 
 
-# ── Core pipeline logic (no Streamlit UI side-effects) ───────────────────────
+# ── Background investigations ─────────────────────────────────────────────────
+# The pipeline runs on worker threads (dashboard/jobs.py), so clicking around the
+# app can no longer cancel it. The main thread only queues work and merges results.
 
-def _pipeline_core(
-    anomaly: Anomaly,
-    ct_events: list[dict],
-) -> tuple[InvestigationReport, str] | tuple[None, str]:
-    """Run Detective→Analyst→Narrator for one anomaly.
-
-    Returns:
-        (InvestigationReport, "") on success, or (None, error_message) on failure.
-    """
-    if not _check_api_limit():
-        return None, "API call limit reached."
-
-    t_start = time.monotonic()
-    try:
-        suspects = Detective.get_events_in_window(ct_events, anomaly) if ct_events else []
-
-        analysis = _get_analyst().analyze(anomaly, suspects)
-        st.session_state.api_calls += 1
-
-        hypotheses = analysis.get("hypotheses", [])
-        ruled_out = analysis.get("ruled_out", [])
-
-        # Handle Analyst returning empty / malformed response
-        if not isinstance(hypotheses, list):
-            hypotheses = []
-        if not isinstance(ruled_out, list):
-            ruled_out = []
-
-        report_md = _get_narrator().generate_report(anomaly, analysis)
-        st.session_state.api_calls += 1
-
-        if not report_md or not report_md.strip():
-            report_md = (
-                "## Executive Summary\n"
-                "No root cause could be determined with sufficient confidence.\n\n"
-                "The investigation did not produce a report. "
-                "Please retry or check the API key.\n"
-            )
-
-    except (anthropic.RateLimitError, anthropic.AuthenticationError,
-            anthropic.APIConnectionError, anthropic.APITimeoutError,
-            anthropic.APIStatusError) as exc:
-        return None, _friendly_api_error(exc)
-    except Exception as exc:
-        logging.getLogger(__name__).exception("Pipeline error for %s", anomaly.service)
-        return None, str(exc)
-
-    elapsed = round(time.monotonic() - t_start, 2)
-    cost_estimate = _estimate_api_cost(str(analysis) * 3, report_md)
-    st.session_state.total_cost_estimate += cost_estimate
-
-    inv = InvestigationReport(
-        anomaly=anomaly,
-        hypotheses=hypotheses,
-        ruled_out=ruled_out,
-        remediation=_extract_remediation(report_md),
-        overall_confidence=hypotheses[0].confidence if hypotheses else 0.0,
-        report_markdown=report_md,
-        elapsed_seconds=elapsed,
-    )
-    return inv, ""
+def _board() -> jobs.JobBoard:
+    return st.session_state._board
 
 
-# ── Interactive single-anomaly runner ─────────────────────────────────────────
-
-def _run_investigation(anomaly: Anomaly) -> None:
-    """Execute the pipeline with live st.status progress, then rerun."""
-    if not _check_api_limit():
-        return
-
+def _queue(anomalies: list[Anomaly]) -> int:
+    """Queue anomalies for background investigation, respecting the API budget."""
+    board = _board()
     ct_events, has_ct = _get_cloudtrail_state()
-
-    if not has_ct:
-        st.warning(
-            "No CloudTrail logs provided — analysis based on cost patterns "
-            "and pricing documentation only. Upload CloudTrail logs for full "
-            "evidence-backed analysis."
-        )
-
-    t_start = time.monotonic()
-
-    try:
-        with st.status("Running investigation pipeline…", expanded=True) as status:
-
-            # Step 1 — Sentinel (instant)
-            st.write("🔍 **Sentinel:** Anomaly confirmed")
-            st.write(
-                f"   Service `{anomaly.service}` · Date `{anomaly.date}` · "
-                f"z = {anomaly.z_score:.2f} · δ = +${anomaly.delta:.2f}"
-            )
-
-            # Step 2 — Detective (fast, no LLM)
-            if has_ct:
-                st.write("🕵️ **Detective:** Correlating CloudTrail events…")
-                suspects = Detective.get_events_in_window(ct_events, anomaly)
-                st.write(f"   Found **{len(suspects)}** suspect event(s) in ±48 h window")
-            else:
-                st.write("🕵️ **Detective:** Skipped — no CloudTrail logs provided")
-                suspects = []
-
-            # Step 3 — Analyst (slow LLM call)
-            st.write("🧠 **Analyst:** Querying RAG knowledge base and reasoning…")
-            with st.spinner("Analyst thinking — this may take 20–40 s…"):
-                analysis = _get_analyst().analyze(anomaly, suspects)
-            st.session_state.api_calls += 1
-
-            hypotheses = analysis.get("hypotheses", [])
-            if not isinstance(hypotheses, list):
-                hypotheses = []
-            ruled_out = analysis.get("ruled_out", [])
-            if not isinstance(ruled_out, list):
-                ruled_out = []
-
-            if not hypotheses:
-                st.write(
-                    "   ⚠️ No hypotheses generated — reporting INSUFFICIENT_EVIDENCE"
-                )
-            else:
-                st.write(
-                    f"   Generated **{len(hypotheses)}** hypothesis/hypotheses · "
-                    f"**{len(ruled_out)}** ruled out"
-                )
-
-            # Step 4 — Narrator (slow LLM call)
-            st.write("📝 **Narrator:** Drafting cited investigation report…")
-            with st.spinner("Narrator writing — usually 15–30 s…"):
-                report_md = _get_narrator().generate_report(anomaly, analysis)
-            st.session_state.api_calls += 1
-
-            if not report_md or not report_md.strip():
-                report_md = (
-                    "## Executive Summary\n"
-                    "No root cause could be determined with sufficient confidence.\n"
-                )
-
-            status.update(label="✅ Investigation complete!", state="complete")
-
-    except (anthropic.RateLimitError, anthropic.AuthenticationError,
-            anthropic.APIConnectionError, anthropic.APITimeoutError,
-            anthropic.APIStatusError) as exc:
-        st.error(_friendly_api_error(exc))
-        if isinstance(exc, anthropic.RateLimitError):
-            st.info("💡 Tip: Wait 30–60 seconds, then click **Run Investigation** again.")
-        logging.getLogger(__name__).warning("API error during investigation: %s", exc)
-        return
-    except Exception as exc:
-        st.error(
-            f"Investigation failed unexpectedly. "
-            f"Please retry. (Internal: {type(exc).__name__})"
-        )
-        logging.getLogger(__name__).exception("Investigation error for %s", anomaly.service)
-        return
-
-    elapsed = round(time.monotonic() - t_start, 2)
-    cost_estimate = _estimate_api_cost(str(analysis) * 3, report_md)
-    st.session_state.total_cost_estimate += cost_estimate
-
-    inv = InvestigationReport(
-        anomaly=anomaly,
-        hypotheses=hypotheses,
-        ruled_out=ruled_out,
-        remediation=_extract_remediation(report_md),
-        overall_confidence=hypotheses[0].confidence if hypotheses else 0.0,
-        report_markdown=report_md,
-        elapsed_seconds=elapsed,
-    )
-    _persist_investigation(inv)
-
-    top_conf = f"{hypotheses[0].confidence:.0%}" if hypotheses else "n/a"
-    st.session_state._pending_toast = (
-        f"Investigation done · {anomaly.service} · {anomaly.date} · "
-        f"confidence {top_conf} · {elapsed:.1f}s"
-    )
-    st.rerun()
-
-
-# ── Batch runner ──────────────────────────────────────────────────────────────
-
-def _run_all_investigations(anomalies: list[Anomaly]) -> None:
-    """Process every anomaly sequentially with a progress bar, then rerun."""
-    if not _check_api_limit():
-        return
-
-    ct_events, has_ct = _get_cloudtrail_state()
-
-    if not has_ct:
-        st.warning(
-            "No CloudTrail logs provided — all analyses will be based on cost patterns "
-            "and pricing documentation only."
-        )
-
-    total = len(anomalies)
-    if total == 0:
-        st.warning("No anomalies to investigate.")
-        return
-
-    completed = 0
-    failed: list[str] = []
-
-    progress = st.progress(0.0, text="Starting batch investigation…")
-    status_text = st.empty()
-
-    for i, anomaly in enumerate(anomalies):
-        # Re-check limit before each pair of calls
-        if st.session_state.api_calls >= API_CALL_LIMIT:
-            remaining = total - i
-            st.warning(
-                f"API call limit reached after {completed} investigation(s). "
-                f"{remaining} investigation(s) skipped."
-            )
-            break
-
-        progress.progress(i / total, text=f"Investigating {anomaly.service} ({i + 1}/{total})…")
-        status_text.markdown(
-            f"⏳ **{anomaly.service}** · {anomaly.date} · z = {anomaly.z_score:.2f}"
-        )
-
-        existing_keys = {(r.anomaly.service, r.anomaly.date) for r in st.session_state.investigations}
-        if (anomaly.service, anomaly.date) in existing_keys:
-            status_text.markdown(f"⏭️ **{anomaly.service}** — already investigated, skipping")
-            completed += 1
+    done_keys = {(r.anomaly.service, r.anomaly.date) for r in st.session_state.investigations}
+    budget = API_CALL_LIMIT - st.session_state.api_calls - board.reserved_calls()
+    queued = over_budget = 0
+    for a in anomalies:
+        key = (a.service, a.date)
+        job = board.get(key)
+        if key in done_keys or (job is not None and job.active):
             continue
-
-        with st.spinner(f"Running pipeline for {anomaly.service}…"):
-            inv, err = _pipeline_core(anomaly, ct_events)
-
-        if inv is not None:
-            _persist_investigation(inv)
-            completed += 1
-        else:
-            failed.append(f"{anomaly.service} ({anomaly.date}): {err}")
-
-    progress.progress(1.0, text="Batch complete!")
-    status_text.empty()
-
-    if failed:
+        if budget < jobs.CALLS_PER_JOB:
+            over_budget += 1
+            continue
+        st.session_state.job_errors.pop(key, None)
+        board.submit(a, ct_events, has_ct)
+        budget -= jobs.CALLS_PER_JOB
+        queued += 1
+    if over_budget:
         st.warning(
-            f"**{completed}/{total} succeeded.** Failed:\n"
-            + "\n".join(f"- {f}" for f in failed)
+            f"Session API limit ({API_CALL_LIMIT} calls) reached: "
+            f"{over_budget} investigation(s) were not started."
         )
-        st.session_state._pending_toast = (
-            f"Batch done: {completed}/{total} succeeded, {len(failed)} failed"
-        )
-    else:
-        st.session_state._pending_toast = f"All {completed} investigations complete!"
+    return queued
 
-    st.rerun()
+
+def _sync_jobs() -> bool:
+    """Merge finished background jobs into session state. True if anything changed."""
+    fresh, calls, cost = _board().drain()
+    if not fresh:
+        return False
+    st.session_state.api_calls += calls
+    st.session_state.total_cost_estimate += cost
+    selected = st.session_state.selected_anomaly
+    ok = failed = 0
+    for job in fresh:
+        if job.state == "done" and job.result is not None:
+            ok += 1
+            existing = {(r.anomaly.service, r.anomaly.date) for r in st.session_state.investigations}
+            if job.key not in existing:
+                st.session_state.investigations.append(job.result)
+            if selected is not None and (selected.service, selected.date) == job.key:
+                st.session_state.current_investigation = job.result
+            elif st.session_state.current_investigation is None:
+                st.session_state.current_investigation = job.result
+        else:
+            failed += 1
+            st.session_state.job_errors[job.key] = job.error or "Investigation failed."
+    if len(fresh) == 1 and ok == 1:
+        j = fresh[0]
+        conf = f"{j.result.overall_confidence:.0%}" if j.result and j.result.hypotheses else "n/a"
+        st.session_state._pending_toast = (
+            f"Investigation done · {j.anomaly.service} · {j.anomaly.date} · "
+            f"confidence {conf} · {j.elapsed:.1f}s"
+        )
+    elif ok or failed:
+        st.session_state._pending_toast = (
+            f"{ok} investigation(s) complete" + (f", {failed} failed" if failed else "")
+        )
+    return True
+
+
+def _activity_body() -> None:
+    """Global activity bar. Runs as a fragment that re-polls every ~1.5 s while jobs run."""
+    if _sync_jobs():
+        st.rerun()  # full rerun so the table, KPIs and sidebar pick up the new results
+    active = _board().active_jobs()
+    if not active:
+        return
+    done, total = _board().batch_progress()
+    running = [j for j in active if j.state == "running"]
+    lead = (running or active)[0]
+    agent = {"sentinel": "Sentinel", "detective": "Detective", "analyst": "Analyst", "narrator": "Narrator"}.get(lead.step, "")
+    more = f" +{len(active) - 1} more" if len(active) > 1 else ""
+    st.markdown(
+        f"""<div class="cs-activity">
+            <div class="cs-spin"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:var(--ink)">Investigating {lead.anomaly.service}{more}
+                <span style="font-weight:500;color:var(--ink-3)"> · {agent} working · {done}/{total} complete</span></div>
+              <div class="cs-bar"><span style="width:{(done / max(total, 1)) * 100:.0f}%"></span></div>
+            </div>
+            <div style="font-size:.78rem;color:var(--ink-3)">runs in the background · safe to switch tabs</div>
+          </div>""",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_activity() -> None:
+    every = 1.5 if _board().has_active() else None
+    st.fragment(run_every=every)(_activity_body)()
+
+
+def _job_panel_body(key: tuple[str, str]) -> None:
+    """Live 4-agent stepper for one anomaly (fragment, re-polls while it runs)."""
+    if _sync_jobs():
+        st.rerun()
+    job = _board().get(key)
+    if job is None:
+        return
+    st.markdown(
+        theme.stepper_html(job.step, job.state, job.skipped, job.log),
+        unsafe_allow_html=True,
+    )
+    st.caption(f"Elapsed {job.elapsed:0.0f}s · the Analyst and Narrator calls usually take 40–90 s together")
+
+
+def _render_job_panel(key: tuple[str, str]) -> None:
+    job = _board().get(key)
+    every = 1.0 if (job is not None and job.active) else None
+    st.fragment(run_every=every)(_job_panel_body)(key)
 
 
 # ── Investigation navigation callbacks ───────────────────────────────────────
@@ -904,6 +534,12 @@ def _nav_select() -> None:
     st.session_state.selected_anomaly = target.anomaly
 
 
+# ── Merge anything that finished in the background, then show pending toast ───
+_sync_jobs()
+if st.session_state._pending_toast:
+    st.toast(st.session_state._pending_toast, icon="✅")
+    st.session_state._pending_toast = ""
+
 # ═════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
@@ -911,14 +547,13 @@ def _nav_select() -> None:
 with st.sidebar:
     st.markdown("""
 <div class="sb-brand">
-    <div class="sb-brand-title">🔍 CostSherlock</div>
-    <div class="sb-brand-sub">AWS FinOps · Anomaly Intelligence</div>
+    <div class="sb-logo">🔍</div>
+    <div>
+        <div class="sb-brand-title">CostSherlock</div>
+        <div class="sb-brand-sub">AWS FinOps · Anomaly Intelligence</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
-
-    st.radio("Navigation", VIEWS, key="current_view")
-
-    st.divider()
 
     # ── Investigation status pills ────────────────────────────────────────────
     anomalies_ss = st.session_state.anomalies
@@ -950,7 +585,7 @@ with st.sidebar:
     st.markdown("")
 
     # ── Load Demo Data ────────────────────────────────────────────────────────
-    if st.button("📥 Load Demo Data", use_container_width=True):
+    if st.button("📥 Load Demo Data", width="stretch"):
         with st.spinner("Loading synthetic dataset…"):
             try:
                 z = st.session_state.z_threshold_slider
@@ -1163,7 +798,7 @@ with st.sidebar:
         if st.button(
             "🔄 Reset API Counter",
             help="For local development only — resets the session call counter to 0.",
-            use_container_width=True,
+            width="stretch",
         ):
             st.session_state.api_calls = 0
             st.success("API counter reset to 0.")
@@ -1181,18 +816,38 @@ with st.sidebar:
 # MAIN CONTENT — dispatch on current_view
 # ═════════════════════════════════════════════════════════════════════════════
 
+# ── Hero (Timeline only), top navigation, live activity bar ───────────────────
+if st.session_state.current_view == "Timeline":
+    _hero_anoms = st.session_state.anomalies
+    if _hero_anoms:
+        _hero_bars = [a.delta for a in sorted(_hero_anoms, key=lambda a: -a.delta)]
+        _hero_chips = [
+            (str(len(_hero_anoms)), "anomalies"),
+            (f"${sum(a.delta for a in _hero_anoms):,.0f}", "excess spend"),
+            ("4", "agents"),
+        ]
+    else:
+        _hero_bars = None
+        _hero_chips = [("4", "agents"), ("RAG", "cited evidence"), ("RAGAS", "evaluated")]
+    theme.render_hero(_hero_bars, _hero_chips)
+
+st.radio("Navigation", VIEWS, key="current_view", horizontal=True, label_visibility="collapsed")
+_render_activity()
 view = st.session_state.current_view
 
 # ─────────────────────────────────────────────────────────────────────────────
 # VIEW 1 — ANOMALY TIMELINE
 # ─────────────────────────────────────────────────────────────────────────────
 if view == "Timeline":
-    st.title("📈 Anomaly Timeline")
-
     if not st.session_state.data_loaded:
-        st.info(
-            "👈 Click **Load Demo Data** in the sidebar to get started, "
-            "or upload your own Cost Explorer JSON export."
+        st.markdown(
+            """<div class="cs-empty cs-rise">
+                <div class="big">📊</div>
+                <div style="font-family:var(--display);font-weight:800;font-size:1.35rem;color:var(--ink)">No data loaded yet</div>
+                <p style="margin:8px 0 0">Open the sidebar and click <b>Load Demo Data</b> to see four agents
+                investigate real-looking AWS cost spikes, or upload your own Cost Explorer JSON export.</p>
+            </div>""",
+            unsafe_allow_html=True,
         )
     else:
         df: pd.DataFrame = st.session_state.cost_df
@@ -1226,7 +881,7 @@ if view == "Timeline":
 
             # ── Plotly chart ──────────────────────────────────────────────────
             try:
-                palette = px.colors.qualitative.Set2
+                palette = theme.SERIES
                 services = df["service"].unique().tolist()
                 color_map = {s: palette[i % len(palette)] for i, s in enumerate(services)}
 
@@ -1239,7 +894,7 @@ if view == "Timeline":
                             y=svc_df["cost"],
                             mode="lines",
                             name=service,
-                            line=dict(color=color_map[service], width=1.8),
+                            line=dict(color=color_map[service], width=2.2, shape="spline", smoothing=0.55),
                             hovertemplate=(
                                 f"<b>{service}</b><br>"
                                 "Date: %{x|%Y-%m-%d}<br>"
@@ -1249,7 +904,7 @@ if view == "Timeline":
                     )
 
                 # anomaly_trace_idx: used below for click-event detection
-                anomaly_trace_idx = len(services)
+                anomaly_trace_idx = len(services) + 1  # halo trace sits at len(services)
 
                 if anomalies:
                     fig.add_trace(
@@ -1257,12 +912,22 @@ if view == "Timeline":
                             x=[pd.Timestamp(a.date) for a in anomalies],
                             y=[a.cost for a in anomalies],
                             mode="markers",
+                            hoverinfo="skip",
+                            showlegend=False,
+                            marker=dict(size=26, color="rgba(229,72,77,0.16)", line=dict(width=0)),
+                        )
+                    )
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[pd.Timestamp(a.date) for a in anomalies],
+                            y=[a.cost for a in anomalies],
+                            mode="markers",
                             name="Anomaly",
                             marker=dict(
-                                symbol="diamond",
-                                size=14,
+                                symbol="circle",
+                                size=12,
                                 color=RED,
-                                line=dict(width=2, color="darkred"),
+                                line=dict(width=3, color="#FFFFFF"),
                             ),
                             customdata=[
                                 (
@@ -1279,20 +944,15 @@ if view == "Timeline":
                         )
                     )
 
+                theme.style_figure(fig, height=440)
                 fig.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    height=420,
-                    legend=dict(orientation="v", x=1.01, y=1.0, bgcolor="rgba(0,0,0,0)"),
-                    xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)", title="Date"),
-                    yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)", title="Daily Cost ($)"),
+                    yaxis_title="Daily cost ($)",
                     hovermode="closest",
                     clickmode="event+select",
-                    margin=dict(l=60, r=40, t=20, b=60),
                 )
                 timeline_event = st.plotly_chart(
                     fig,
-                    use_container_width=True,
+                    width="stretch",
                     key="timeline_chart",
                     on_select="rerun",
                 )
@@ -1322,92 +982,96 @@ if view == "Timeline":
 
             # ── Anomaly table ─────────────────────────────────────────────────
             if anomalies:
+                board = _board()
+                done_keys = {
+                    (r.anomaly.service, r.anomaly.date) for r in st.session_state.investigations
+                }
+                active_keys = {j.key for j in board.active_jobs()}
+                pending = [
+                    a for a in anomalies
+                    if (a.service, a.date) not in done_keys and (a.service, a.date) not in active_keys
+                ]
+
                 col_left, col_right = st.columns([3, 1])
                 with col_left:
-                    st.subheader(f"Detected Anomalies ({len(anomalies)})")
+                    st.subheader(f"Detected anomalies ({len(anomalies)})")
+                    st.caption("Runs in the background, so you can keep exploring while the agents work.")
                 with col_right:
-                    already_done_keys = {
-                        (r.anomaly.service, r.anomaly.date)
-                        for r in st.session_state.investigations
-                    }
-                    pending = [
-                        a for a in anomalies
-                        if (a.service, a.date) not in already_done_keys
-                    ]
-                    run_all_label = (
-                        f"⚡ Run All ({len(pending)} pending)"
-                        if pending
-                        else "⚡ All Investigated"
-                    )
-                    run_all_disabled = len(pending) == 0 or not _check_api_limit() if False else (len(pending) == 0)
+                    if active_keys:
+                        run_all_label = f"⏳ {len(active_keys)} running…"
+                    elif pending:
+                        run_all_label = f"⚡ Run All ({len(pending)} pending)"
+                    else:
+                        run_all_label = "✓ All investigated"
                     if st.button(
                         run_all_label,
-                        disabled=run_all_disabled,
+                        disabled=(len(pending) == 0),
                         type="primary",
-                        use_container_width=True,
+                        width="stretch",
                         key="run_all_btn",
                     ):
-                        _run_all_investigations(anomalies)
+                        if _queue(pending):
+                            st.rerun()
 
                 sorted_anomalies = sorted(anomalies, key=lambda a: a.z_score, reverse=True)
+                widths = [2.4, 1.7, 1.2, 1.3, 1.0, 1.3, 1.5, 1.6]
 
-                hdr_cols = st.columns([2.5, 2, 1.3, 1.3, 1.1, 1.3, 1.2, 1.5])
-                labels_hdr = ["Service", "Date", "Cost", "Expected", "Z-Score", "Delta ($)", "Status", "Action"]
-                for col, lbl in zip(hdr_cols, labels_hdr):
-                    col.markdown(
-                        f"<span style='font-weight:700;color:var(--text-color);font-size:0.82rem;"
-                        f"text-transform:uppercase;letter-spacing:0.04em'>{lbl}</span>",
-                        unsafe_allow_html=True,
-                    )
-                st.markdown(
-                    "<hr style='margin:4px 0 6px 0;border:none;border-top:2px solid rgba(128,128,128,0.3)'>",
-                    unsafe_allow_html=True,
-                )
-
-                already_done_keys = {
-                    (r.anomaly.service, r.anomaly.date)
-                    for r in st.session_state.investigations
-                }
+                hdr_cols = st.columns(widths)
+                labels_hdr = ["Service", "Date", "Cost", "Expected", "Z-score", "Delta", "Status", ""]
+                for idx_h, (col, lbl) in enumerate(zip(hdr_cols, labels_hdr)):
+                    marker = '<span class="row-marker hdr"></span>' if idx_h == 0 else ""
+                    col.markdown(f'{marker}<span class="col-h">{lbl}</span>', unsafe_allow_html=True)
 
                 for i, a in enumerate(sorted_anomalies):
+                    key = (a.service, a.date)
                     is_high = a.z_score > 3.0
-                    is_investigated = (a.service, a.date) in already_done_keys
-                    row = st.columns([2.5, 2, 1.3, 1.3, 1.1, 1.3, 1.2, 1.5])
-                    row[0].write(a.service)
-                    row[1].write(a.date)
-                    row[2].write(f"${a.cost:.2f}")
-                    row[3].write(f"${a.expected_cost:.2f}")
-                    if is_high:
-                        row[4].markdown(f"**:red[{a.z_score:.2f}]**")
-                    else:
-                        row[4].write(f"{a.z_score:.2f}")
-                    row[5].write(f"${a.delta:.2f}")
+                    is_investigated = key in done_keys
+                    job = board.get(key)
+                    err = st.session_state.job_errors.get(key)
+                    row = st.columns(widths)
+                    row[0].markdown(
+                        f'<span class="row-marker{" hi" if is_high else ""}"></span>'
+                        f'<span class="cell-svc">{a.service}</span>',
+                        unsafe_allow_html=True,
+                    )
+                    row[1].markdown(f'<span class="cell-num">{a.date}</span>', unsafe_allow_html=True)
+                    row[2].markdown(f'<span class="cell-num">${a.cost:,.2f}</span>', unsafe_allow_html=True)
+                    row[3].markdown(f'<span class="cell-num">${a.expected_cost:,.2f}</span>', unsafe_allow_html=True)
+                    z_cls = "z-hot" if is_high else "cell-num"
+                    row[4].markdown(f'<span class="{z_cls}">{a.z_score:.2f}</span>', unsafe_allow_html=True)
+                    row[5].markdown(f'<span class="cell-num">+${a.delta:,.2f}</span>', unsafe_allow_html=True)
                     if is_investigated:
-                        row[6].markdown("✅ Done")
+                        row[6].markdown(theme.pill("done", "Done"), unsafe_allow_html=True)
+                    elif job is not None and job.state == "running":
+                        row[6].markdown(theme.pill("run", f"{job.step.title()}…"), unsafe_allow_html=True)
+                    elif job is not None and job.state == "queued":
+                        row[6].markdown(theme.pill("queued", "Queued"), unsafe_allow_html=True)
+                    elif err:
+                        row[6].markdown(theme.pill("fail", "Failed"), unsafe_allow_html=True)
                     else:
-                        row[6].markdown("⏳ Pending")
+                        row[6].markdown(theme.pill("pending", "Pending"), unsafe_allow_html=True)
+
                     if is_investigated:
                         with row[7]:
                             st.markdown('<div class="btn-investigated">', unsafe_allow_html=True)
                             st.button(
-                                "📄 View Report",
+                                "View report",
                                 key=f"inv_{i}",
                                 on_click=_on_investigate,
                                 args=(a,),
+                                width="stretch",
                             )
                             st.markdown('</div>', unsafe_allow_html=True)
+                    elif job is not None and job.active:
+                        row[7].button("Watch live", key=f"inv_{i}", on_click=_on_investigate, args=(a,), width="stretch")
                     else:
                         row[7].button(
-                            "🔍 Investigate",
+                            "Retry" if err else "Investigate",
                             key=f"inv_{i}",
                             on_click=_on_investigate,
                             args=(a,),
+                            width="stretch",
                         )
-                    sep_color = "rgba(220,38,38,0.2)" if is_high else "rgba(128,128,128,0.12)"
-                    st.markdown(
-                        f"<hr style='margin:2px 0;border:none;border-top:1px solid {sep_color}'>",
-                        unsafe_allow_html=True,
-                    )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # VIEW 2 — LIVE INVESTIGATION
@@ -1489,7 +1153,7 @@ elif view == "Investigation":
                         st.button(
                             "← Prev",
                             disabled=(current_idx == 0),
-                            use_container_width=True,
+                            width="stretch",
                             key="inv_prev",
                             on_click=_nav_prev,
                             help="Go to previous investigation",
@@ -1507,7 +1171,7 @@ elif view == "Investigation":
                         st.button(
                             "Next →",
                             disabled=(current_idx == len(invs_list) - 1),
-                            use_container_width=True,
+                            width="stretch",
                             key="inv_next",
                             on_click=_nav_next,
                             help="Go to next investigation",
@@ -1544,22 +1208,19 @@ elif view == "Investigation":
                             x=[anomaly_ts],
                             y=[1],
                             mode="markers+text",
-                            marker=dict(symbol="diamond", size=16, color=RED, line=dict(width=2, color="darkred")),
+                            marker=dict(symbol="circle", size=16, color=RED, line=dict(width=3, color="#FFFFFF")),
                             text=[f"⚠ {inv.anomaly.service}"],
                             textposition="top center",
                             name="Anomaly Spike",
                             hovertemplate=f"<b>Anomaly</b><br>{inv.anomaly.date}<br>Cost: ${inv.anomaly.cost:.2f}<extra></extra>",
                         ))
+                        theme.style_figure(tl_fig, height=130, legend=False)
                         tl_fig.update_layout(
-                            paper_bgcolor="rgba(0,0,0,0)",
-                            plot_bgcolor="rgba(0,0,0,0)",
-                            height=120,
                             margin=dict(l=20, r=20, t=10, b=20),
-                            showlegend=False,
                             xaxis=dict(showgrid=False, zeroline=False, title=""),
                             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, 2], title=""),
                         )
-                        st.plotly_chart(tl_fig, use_container_width=True)
+                        st.plotly_chart(tl_fig, width="stretch")
                     except Exception:
                         pass  # Timeline is decorative; skip silently
 
@@ -1678,28 +1339,46 @@ elif view == "Investigation":
                             key="dl_rem",
                         )
 
-            elif st.session_state._auto_run:
-                st.session_state._auto_run = False
-                _run_investigation(anomaly)
             else:
-                _, has_ct = _get_cloudtrail_state()
-                if not has_ct:
-                    st.warning(
-                        "No CloudTrail logs loaded — the analysis will use RAG knowledge base only. "
-                        "Upload CloudTrail logs in the sidebar for full evidence-backed analysis."
-                    )
-                st.info(
-                    "Click **Run Investigation** to start the 4-agent pipeline. "
-                    "This makes two LLM API calls (Analyst + Narrator) and takes ~60–90 s."
-                )
-                if st.session_state.api_calls >= API_CALL_LIMIT:
-                    st.error(
-                        f"Session API limit reached ({API_CALL_LIMIT} calls). "
-                        "Restart the app or use the Reset API Counter in ⚙️ Settings."
-                    )
+                key = (anomaly.service, anomaly.date)
+                job = _board().get(key)
+
+                # Queue automatically when arriving from an "Investigate" click.
+                if st.session_state._auto_run and not (job is not None and job.active):
+                    st.session_state._auto_run = False
+                    if _queue([anomaly]):
+                        st.rerun()
+                st.session_state._auto_run = False
+                job = _board().get(key)
+
+                if job is not None and job.active:
+                    st.markdown("#### Pipeline running")
+                    _render_job_panel(key)
                 else:
-                    if st.button("🚀 Run Investigation", type="primary"):
-                        _run_investigation(anomaly)
+                    err = st.session_state.job_errors.get(key)
+                    if err:
+                        st.error(err)
+                        if job is not None and job.log:
+                            st.markdown(theme.stepper_html(job.step, "failed", job.skipped, job.log), unsafe_allow_html=True)
+                    _, has_ct = _get_cloudtrail_state()
+                    if not has_ct:
+                        st.warning(
+                            "No CloudTrail logs loaded — the analysis will use the RAG knowledge base only. "
+                            "Upload CloudTrail logs in the sidebar for full evidence-backed analysis."
+                        )
+                    st.info(
+                        "Click **Run Investigation** to start the 4-agent pipeline. "
+                        "It makes two LLM calls (Analyst + Narrator) and takes about 40–90 s. "
+                        "It keeps running if you switch tabs."
+                    )
+                    if st.session_state.api_calls >= API_CALL_LIMIT:
+                        st.error(
+                            f"Session API limit reached ({API_CALL_LIMIT} calls). "
+                            "Restart the app or use the Reset API Counter in ⚙️ Settings."
+                        )
+                    elif st.button("🚀 Run Investigation" if not err else "🔁 Retry Investigation", type="primary"):
+                        if _queue([anomaly]):
+                            st.rerun()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # VIEW 3 — EVIDENCE EXPLORER
@@ -1917,7 +1596,7 @@ elif view == "Compare":
                         ],
                     }
                 )
-                st.dataframe(cmp_df, hide_index=True, use_container_width=True)
+                st.dataframe(cmp_df, hide_index=True, width="stretch")
             except Exception as exc:
                 st.warning(f"Could not render comparison table: {exc}")
 
@@ -1944,16 +1623,10 @@ elif view == "Compare":
                         textposition="outside",
                     ),
                 ])
-                bar_fig.update_layout(
-                    barmode="group",
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    height=320,
-                    margin=dict(l=40, r=40, t=20, b=40),
-                    yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.2)"),
-                    legend=dict(bgcolor="rgba(0,0,0,0)"),
-                )
-                st.plotly_chart(bar_fig, use_container_width=True)
+                theme.style_figure(bar_fig, height=340)
+                bar_fig.update_layout(barmode="group", bargap=0.35)
+                bar_fig.update_traces(marker_line_width=0)
+                st.plotly_chart(bar_fig, width="stretch")
             except Exception as exc:
                 st.warning(f"Could not render comparison chart: {exc}")
 

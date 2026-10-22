@@ -1,0 +1,24 @@
+[server]
+# Skip the file watcher: it walks every `transformers` submodule on startup,
+# floods the logs with torchvision tracebacks, and slows each cold start.
+fileWatcherType = "none"
+runOnSave = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = "type"
+
+[theme]
+base = "light"
+primaryColor = "#3B5BFF"
+backgroundColor = "#F4F5F9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#14161F"
+# Neutralise the default yellow warning palette (keeps the off-white look).
+yellowColor = "#F08A24"
+yellowBackgroundColor = "#FFF4E8"
+yellowTextColor = "#8A4A0A"

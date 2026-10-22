@@ -154,7 +154,7 @@ Evaluated on 5 synthetic anomalies (from a ground-truth set of 8 spanning EC2, S
 | Component | Technology |
 |-----------|-----------|
 | Language | Python 3.11 |
-| LLM | Anthropic Claude Sonnet (`claude-sonnet-4-6`) |
+| LLM | Anthropic Claude Sonnet (`claude-sonnet-5-5`) |
 | Embeddings | `sentence-transformers/all-MiniLM-L6-v2` (local, free) |
 | Vector DB | ChromaDB (local, persistent) |
 | RAG Framework | LangChain |

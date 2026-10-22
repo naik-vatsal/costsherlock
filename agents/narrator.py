@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-MODEL = "claude-sonnet-4-6"
-MAX_TOKENS = 2500
+MODEL = "claude-sonnet-5-5"
+MAX_TOKENS = 4500
 
 # Section headers expected in every report (used for validation).
 REQUIRED_SECTIONS = [

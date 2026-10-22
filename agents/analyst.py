@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-MODEL = "claude-sonnet-4-6"
-MAX_TOKENS = 3000
+MODEL = "claude-sonnet-5-5"
+MAX_TOKENS = 4000
 RETRIEVAL_TOP_K = 8
 
 # Cost-math validation bounds: calculated result must be between

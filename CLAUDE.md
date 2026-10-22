@@ -11,7 +11,7 @@ Cost Explorer JSON → Sentinel (anomaly detection) → Detective (CloudTrail co
 
 ## Tech Stack
 - **Language:** Python 3.11+
-- **LLM:** Anthropic Claude Sonnet (claude-sonnet-4-20250514) via API
+- **LLM:** Anthropic Claude Sonnet (claude-sonnet-5-5) via API
 - **Embeddings:** sentence-transformers all-MiniLM-L6-v2 (local, FREE — no API needed)
 - **Vector DB:** ChromaDB (local, persistent)
 - **RAG Framework:** LangChain
@@ -87,7 +87,7 @@ python demo.py
 - MVP uses batch JSON file ingestion, NOT live AWS API polling
 - ChromaDB runs locally (no cloud vector DB dependency)
 - Embeddings use local sentence-transformers (all-MiniLM-L6-v2) — zero API cost
-- LLM calls use Anthropic Claude Sonnet (claude-sonnet-4-20250514) via anthropic Python SDK
+- LLM calls use Anthropic Claude Sonnet (claude-sonnet-5-5) via anthropic Python SDK
 - Agent 3 (Analyst) must validate causal plausibility quantitatively, not just temporally
 - Every claim in Narrator output must have a citation or be labeled [INFERENCE]
 - Streamlit chosen over React to keep entire stack in Python
