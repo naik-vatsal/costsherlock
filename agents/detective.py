@@ -125,7 +125,22 @@ class Detective:
             return None
 
     @staticmethod
-    def _build_summary(event: dict) -> str:
+    def _format_params(params: dict, limit: int = 700) -> str:
+        """Compact JSON of the request parameters, truncated for the LLM prompt."""
+        if not params:
+            return ""
+        text = json.dumps(params, separators=(",", ":"), sort_keys=True, default=str)
+        return text if len(text) <= limit else text[: limit - 1] + "…"
+
+    @classmethod
+    def _build_summary(cls, event: dict) -> str:
+        """Summary line plus the request parameters (needed for cost math)."""
+        base = cls._base_summary(event)
+        params = cls._format_params(event.get("requestParameters") or {})
+        return f"{base} | requestParameters: {params}" if params else base
+
+    @staticmethod
+    def _base_summary(event: dict) -> str:
         """Generate a human-readable summary for a CloudTrail event.
 
         Args:

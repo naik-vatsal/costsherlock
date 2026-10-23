@@ -290,3 +290,20 @@ class TestMutatingEventsWhitelist:
     def test_read_only_names_absent(self) -> None:
         read_only = {"DescribeInstances", "GetObject", "ListBuckets", "DescribeAlarms"}
         assert read_only.isdisjoint(MUTATING_EVENTS)
+
+
+class TestSummaryIncludesRequestParameters:
+    """The LLM needs request parameters (timeout, instance class, ...) for cost math."""
+
+    def test_lambda_timeout_and_memory_in_summary(self) -> None:
+        from agents.detective import Detective
+
+        event = {
+            "eventName": "UpdateFunctionConfiguration20150331",
+            "userIdentity": {"arn": "arn:aws:iam::1:user/dev-bob"},
+            "awsRegion": "us-east-1",
+            "sourceIPAddress": "10.0.3.55",
+            "requestParameters": {"functionName": "f", "timeout": 900, "memorySize": 1024},
+        }
+        summary = Detective._build_summary(event)
+        assert '"timeout":900' in summary and '"memorySize":1024' in summary

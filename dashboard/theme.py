@@ -16,7 +16,6 @@ import json
 
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 
 # ── Design tokens (mirrored in the CSS below) ─────────────────────────────────
 INK = "#14161F"
@@ -200,6 +199,12 @@ div.btn-investigated button { background: var(--ok-soft) !important; border: 1px
 [data-testid="stMetric"]:hover { box-shadow: var(--sh-3); }
 [data-testid="stMetricLabel"] p { color: var(--ink-3) !important; font-weight: 600 !important; font-size: .76rem !important;
   text-transform: uppercase; letter-spacing: .07em; }
+[data-testid="stMetric"] * { text-overflow: clip !important; overflow: visible !important; }
+[data-testid="stMetricLabel"] * { white-space: normal !important; }
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] * { white-space: nowrap !important; }
+[data-testid="stMetricValue"] { font-size: 2.1rem !important; line-height: 1.15; }
+@media (max-width: 1180px) { [data-testid="stMetricValue"] { font-size: 1.3rem !important; } }
+@media (max-width: 760px) { [data-testid="stMetricValue"] { font-size: 1.6rem !important; } }
 [data-testid="stMetricValue"], [data-testid="stMetricValue"] * { font-family: var(--display) !important; font-weight: 800 !important;
   letter-spacing: -.03em; color: var(--ink) !important; font-variant-numeric: tabular-nums; }
 
@@ -347,9 +352,22 @@ _MOTION_JS = """
 """
 
 
+def _embed(html_doc: str, height: int, hidden: bool = False) -> None:
+    """Embed an HTML document via st.iframe (components.html is deprecated)."""
+    if hidden:
+        # Zero-footprint host for the behaviour script; the iframe stays mounted so JS runs.
+        st.markdown("<style>[data-testid='stElementContainer']:has(iframe[height='1']){height:0!important;"
+                    "margin:0!important;overflow:hidden;position:absolute}</style>", unsafe_allow_html=True)
+    if hasattr(st, "iframe"):
+        st.iframe(html_doc, height=height)
+    else:  # older Streamlit
+        import streamlit.components.v1 as components
+        components.html(html_doc, height=height)
+
+
 def inject_motion() -> None:
     """Add the 3D tilt behaviour (zero-height component, idempotent)."""
-    components.html(_MOTION_JS, height=0)
+    _embed(_MOTION_JS, height=1, hidden=True)
 
 
 # ── Hero (Three.js) ───────────────────────────────────────────────────────────
@@ -384,7 +402,9 @@ _HERO = """
   .hint { position: absolute; right: 22px; bottom: 14px; font-size: 11.5px; color: #8089A0; z-index: 2; letter-spacing: .02em; }
   @media (max-width: 760px) {
     .copy { left: 22px; right: 22px; top: 22px; transform: none; max-width: none; }
-    p { font-size: 14.5px; } canvas { opacity: .55; } .hint { display: none; }
+    p { font-size: 14.5px; } canvas { opacity: .4; } .hint { display: none; }
+    .copy { padding: 22px; margin: -22px -22px 0; border-radius: 28px 28px 0 0;
+      background: linear-gradient(180deg, rgba(255,255,255,.94) 0%, rgba(255,255,255,.88) 62%, rgba(255,255,255,0) 100%); }
   }
 </style></head>
 <body><div class="wrap" id="wrap">
@@ -532,7 +552,7 @@ def hero_html(
 
 
 def render_hero(bar_values: list[float] | None, chips: list[tuple[str, str]] | None, height: int = 380) -> None:
-    components.html(hero_html(bar_values, chips=chips), height=height)
+    _embed(hero_html(bar_values, chips=chips), height=height)
 
 
 # ── Plotly styling ────────────────────────────────────────────────────────────

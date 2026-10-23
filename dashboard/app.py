@@ -56,7 +56,7 @@ st.set_page_config(
     page_title="CostSherlock",
     page_icon="🔍",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 # ── Visual system ─────────────────────────────────────────────────────────────
