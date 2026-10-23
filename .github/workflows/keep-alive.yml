@@ -17,10 +17,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install Playwright
-        run: |
-          pip install playwright
-          playwright install --with-deps chromium
+      - name: Install Playwright (uses the Chrome already on the runner)
+        run: pip install playwright
       - name: Wake / verify app
         run: python scripts/keep_alive.py
       - uses: actions/upload-artifact@v4

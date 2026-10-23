@@ -18,7 +18,7 @@ WAKE_BUTTON = "button:has-text('Yes, get this app back up')"
 
 def main() -> int:
     with sync_playwright() as pw:
-        browser = pw.chromium.launch()
+        browser = pw.chromium.launch(channel="chrome")
         page = browser.new_page(viewport={"width": 1280, "height": 800})
         page.goto(URL, wait_until="domcontentloaded", timeout=60_000)
         try:
