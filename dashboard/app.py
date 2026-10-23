@@ -1262,7 +1262,7 @@ elif view == "Investigation":
                         )
                     else:
                         for i_h in range(0, len(inv.hypotheses), 2):
-                            ev_cols = st.columns(2)
+                            ev_cols = st.columns(2 if len(inv.hypotheses) - i_h > 1 else 1)
                             for j_h, ev_col in enumerate(ev_cols):
                                 idx_h = i_h + j_h
                                 if idx_h >= len(inv.hypotheses):
@@ -1421,7 +1421,7 @@ elif view == "Evidence":
             )
         else:
             for i_h in range(0, len(inv.hypotheses), 2):
-                ev_cols = st.columns(2)
+                ev_cols = st.columns(2 if len(inv.hypotheses) - i_h > 1 else 1)
                 for j_h, ev_col in enumerate(ev_cols):
                     idx_h = i_h + j_h
                     if idx_h >= len(inv.hypotheses):
